@@ -8,43 +8,61 @@ import {
   Modal,
   TextInput,
   Button,
+  ActivityIndicator,
 } from 'react-native';
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useState} from 'react';
 import {useRoute} from '@react-navigation/native';
 import {RFValue} from 'react-native-responsive-fontsize';
-import {useDispatch, useSelector} from 'react-redux';
 import moment from 'moment';
-import {selectCallLogsByPhoneNumber} from '../state/slice/callLogSlice';
-import {AppDispatch, RootState} from '../state/store';
 import Icon from './common/Icon';
 import {goBack} from '../utility/NavigationUtils';
 import {Avatar} from '@rneui/themed';
-import {setFeedback, selectFeedback} from '../state/slice/feedbackSlice';
-import { Colors } from '../utility/constants';
+import {Colors} from '../utility/constants';
+import CallLogDatabase from '../database/CallLogDatabase';
+
+interface ICallLog {
+  phoneNumber: string;
+  timestamp: number;
+  dateTime: string;
+  type: string;
+  duration: number;
+  // Add other fields as needed
+}
 
 const PersonCallLogs = () => {
   const route = useRoute();
-  const {item} = route?.params || {};
-  const dispatch = useDispatch<AppDispatch>();
+  const params = route.params as {item?: {phoneNumber: string; name?: string}};
+  const phoneNumber = params?.item?.phoneNumber;
+  const name = params?.item?.name;
 
-  const logsForNumber = useSelector((state: RootState) =>
-    selectCallLogsByPhoneNumber(state, item?.phoneNumber),
-  );
-  const feedbackMap = useSelector((state: RootState) => state.feedback);
-
+  const [logsForNumber, setLogsForNumber] = useState<ICallLog[]>([]);
+  const [feedbackMap, setFeedbackMap] = useState<Record<string, string>>({});
   const [modalVisible, setModalVisible] = useState(false);
   const [currentKey, setCurrentKey] = useState<string>('');
   const [feedbackText, setFeedbackText] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const existingFeedback = useSelector((state: RootState) =>
-    currentKey ? selectFeedback(state, currentKey) : '',
-  );
+  const loadAllCallLogs = useCallback(async () => {
+    if (!phoneNumber) return;
+
+    setIsLoading(true);
+    try {
+      const realm = await CallLogDatabase.initialize();
+      const results = realm.objects<ICallLog>('CallLog')
+        .filtered('phoneNumber == $0', phoneNumber)
+        .sorted('timestamp', true);
+
+      setLogsForNumber(Array.from(results));
+    } catch (error) {
+      // Handle error silently or show user feedback
+    } finally {
+      setIsLoading(false);
+    }
+  }, [phoneNumber]);
 
   useEffect(() => {
-    if (modalVisible && currentKey) {
-      setFeedbackText(existingFeedback || '');
-    }
-  }, [modalVisible, currentKey, existingFeedback]);
+    loadAllCallLogs();
+  }, [loadAllCallLogs]);
 
   const handleOpenModal = (key: string) => {
     setCurrentKey(key);
@@ -53,7 +71,10 @@ const PersonCallLogs = () => {
 
   const handleSaveFeedback = () => {
     if (currentKey) {
-      dispatch(setFeedback({key: currentKey, feedback: feedbackText}));
+      setFeedbackMap(prev => ({
+        ...prev,
+        [currentKey]: feedbackText,
+      }));
     }
     setModalVisible(false);
   };
@@ -69,9 +90,8 @@ const PersonCallLogs = () => {
       return date.format('hh:mm A');
     } else if (date.isSame(yesterday, 'day')) {
       return `Yesterday ${date.format('hh:mm A')}`;
-    } else {
-      return date.format('DD-MMM-YYYY hh:mm A');
     }
+    return date.format('DD-MMM-YYYY hh:mm A');
   };
 
   const formatTime = (seconds: number): string => {
@@ -79,113 +99,71 @@ const PersonCallLogs = () => {
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
       const remainingSeconds = seconds % 60;
-
-      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
-        2,
-        '0',
-      )}:${String(remainingSeconds).padStart(2, '0')}`;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
     }
 
     if (seconds >= 60) {
       const minutes = Math.floor(seconds / 60);
-      const remainingSeconds = seconds % 60;
-
-      return `${String(minutes).padStart(2, '0')}:${String(
-        remainingSeconds,
-      ).padStart(2, '0')}`;
+      return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
     }
 
     return `${seconds}s`;
   };
 
-  const renderItem = ({item}: any) => {
-    
+  const renderItem = ({item}: {item: ICallLog}) => {
     const feedbackExists = Boolean(feedbackMap[item.dateTime]);
     return (
       <TouchableOpacity
-        style={[
-          styles.callLogContainer,
-          feedbackExists && styles.callLogWithFeedback,
-        ]}
+        style={[styles.callLogContainer, feedbackExists && styles.callLogWithFeedback]}
         onPress={() => handleOpenModal(item.dateTime)}>
         <View style={styles.callLogInfo}>
-          {/* Icons */}
-          {item?.type === 'MISSED' && (
-            <Icon
-              name="call-missed"
-              iconFamily="MaterialIcons"
-              color="red"
-              size={RFValue(18)}
-            />
-          )}
-          {['INCOMING', 'UNKNOWN'].includes(item?.type) && (
-            <Icon
-              name="arrow-bottom-left"
-              iconFamily="MaterialCommunityIcons"
-              color="green"
-              size={RFValue(18)}
-            />
-          )}
-          {item?.type === 'OUTGOING' && (
-            <Icon
-              name="arrow-top-right"
-              iconFamily="MaterialCommunityIcons"
-              color="blue"
-              size={RFValue(18)}
-            />
-          )}
+          {item.type === 'MISSED' && <Icon name="call-missed" iconFamily="MaterialIcons" color="red" size={RFValue(18)} />}
+          {['INCOMING', 'UNKNOWN'].includes(item.type) && <Icon name="arrow-bottom-left" iconFamily="MaterialCommunityIcons" color="green" size={RFValue(18)} />}
+          {item.type === 'OUTGOING' && <Icon name="arrow-top-right" iconFamily="MaterialCommunityIcons" color="blue" size={RFValue(18)} />}
           <View style={styles.callLogText}>
-            <Text style={styles.dateText}>{formatDate(item?.dateTime)}</Text>
-            <Text style={styles.typeText}>
-              {item?.type === 'UNKNOWN' ? 'INCOMING' : item?.type}
-            </Text>
+            <Text style={styles.dateText}>{formatDate(item.dateTime)}</Text>
+            <Text style={styles.typeText}>{item.type === 'UNKNOWN' ? 'INCOMING' : item.type}</Text>
           </View>
         </View>
-        <Text style={styles.durationText}>
-          {item?.duration ? formatTime(item?.duration) : null}
-        </Text>
+        <Text style={styles.durationText}>{item.duration ? formatTime(item.duration) : null}</Text>
       </TouchableOpacity>
     );
   };
-  
+
+  if (!phoneNumber) {
+    return (
+      <View style={styles.container}>
+        <Text>No phone number provided</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={goBack} style={{alignSelf: 'flex-start'}}>
-          <Icon
-            name="arrow-back-sharp"
-            iconFamily="Ionicons"
-            size={RFValue(24)}
-            color={Colors.black}
-          />
+          <Icon name="arrow-back-sharp" iconFamily="Ionicons" size={RFValue(24)} color={Colors.black} />
         </Pressable>
         <View style={styles.iconContainer}>
-          {item?.name ? (
-            <Avatar
-              size={80}
-              rounded
-              title={item?.name ? item?.name?.split('')[0] : ''}
-              containerStyle={{backgroundColor: Colors.nightInManchestor}}
-            />
+          {name ? (
+            <Avatar size={80} rounded title={name[0]} containerStyle={{backgroundColor: Colors.nightInManchestor}} />
           ) : (
-            <Icon
-              name="person"
-              iconFamily="Ionicons"
-              color={Colors.nightInManchestor}
-              size={RFValue(24)}
-            />
+            <Icon name="person" iconFamily="Ionicons" color={Colors.nightInManchestor} size={RFValue(24)} />
           )}
         </View>
-        <Text style={styles.nameText}>{item?.name || item?.phoneNumber}</Text>
+        <Text style={styles.nameText}>{name || phoneNumber}</Text>
       </View>
 
-      <FlatList
-        data={logsForNumber}
-        renderItem={renderItem}
-        keyExtractor={item => item.dateTime}
-        showsVerticalScrollIndicator={false}
-      />
+      {isLoading ? (
+        <ActivityIndicator size="large" style={styles.loader} />
+      ) : (
+        <FlatList
+          data={logsForNumber}
+          renderItem={renderItem}
+          keyExtractor={item => `${item.phoneNumber}_${item.timestamp}`}
+          showsVerticalScrollIndicator={false}
+        />
+      )}
 
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
@@ -193,12 +171,7 @@ const PersonCallLogs = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Feedback</Text>
               <Pressable onPress={() => setModalVisible(false)}>
-                <Icon
-                  name="close-circle-outline"
-                  iconFamily="Ionicons"
-                  size={RFValue(30)}
-                  color={Colors.black}
-                />
+                <Icon name="close-circle-outline" iconFamily="Ionicons" size={RFValue(30)} color={Colors.black} />
               </Pressable>
             </View>
             <TextInput
@@ -223,8 +196,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
   },
-  header: {alignItems: 'center', justifyContent: 'center', marginBottom: 20},
-  nameText: {fontSize: RFValue(24), fontWeight: 'bold', color: Colors.carbon},
+  header: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 20,
+  },
+  nameText: {
+    fontSize: RFValue(24),
+    fontWeight: 'bold',
+    color: Colors.carbon,
+  },
   callLogContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -240,11 +221,27 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 8,
   },
-  callLogInfo: {flexDirection: 'row', alignItems: 'center', gap: 10},
-  callLogText: {marginLeft: 10},
-  dateText: {fontSize: RFValue(16), color: Colors.stoneCold},
-  typeText: {fontSize: RFValue(12), color: Colors.argent},
-  durationText: {fontSize: RFValue(14), color: Colors.carbon, fontWeight: '500'},
+  callLogInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  callLogText: {
+    marginLeft: 10,
+  },
+  dateText: {
+    fontSize: RFValue(16),
+    color: Colors.stoneCold,
+  },
+  typeText: {
+    fontSize: RFValue(12),
+    color: Colors.argent,
+  },
+  durationText: {
+    fontSize: RFValue(14),
+    color: Colors.carbon,
+    fontWeight: '500',
+  },
   iconContainer: {
     width: 80,
     height: 80,
@@ -268,7 +265,11 @@ const styles = StyleSheet.create({
     padding: 20,
     elevation: 5,
   },
-  modalTitle: {fontSize: RFValue(16), fontWeight: 'bold', color: Colors.black},
+  modalTitle: {
+    fontSize: RFValue(16),
+    fontWeight: 'bold',
+    color: Colors.black,
+  },
   input: {
     borderWidth: 1,
     borderColor: Colors.cerebralGrey,
@@ -286,6 +287,11 @@ const styles = StyleSheet.create({
   },
   callLogWithFeedback: {
     backgroundColor: Colors.titaniumWhite,
+  },
+  loader: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useCallback} from 'react';
+import React, {useState, useEffect} from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,7 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import CallLogs from 'react-native-call-log';
 import {useDispatch, useSelector} from 'react-redux';
-import {
-  setCallLogs,
-  appendCallLogs,
-  setMinTimestamp,
-} from '../state/slice/callLogSlice';
 import {RootState} from '../state/store';
 import {RFValue} from 'react-native-responsive-fontsize';
 import moment from 'moment';
@@ -21,20 +15,17 @@ import {navigate} from '../utility/NavigationUtils';
 import Icon from './common/Icon';
 import {Avatar} from '@rneui/themed';
 import Search from './Search';
-import { Colors } from '../utility/constants';
+import {Colors} from '../utility/constants';
+import {useCallLogs} from '../hooks/useCallLogs';
 
 const CallLogScreen: React.FC = () => {
-  const dispatch = useDispatch();
-  const {callLogs, selectedFilter, minTimestamp} = useSelector(
-    (state: RootState) => state.callLogs,
-  );
-
-  const [isFetching, setIsFetching] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const {selectedFilter} = useSelector((state: RootState) => state.callLogs);
+  const {callLogs, loadMore, refresh, isRefreshing, hasMore, totalCount} =
+    useCallLogs(selectedFilter);
   const [isMenuVisible, setIsMenuVisible] = useState(false);
 
-  const formatDate = (dateTime: string) => {
-    const date = moment(dateTime, 'DD-MMM-YYYY hh:mm:ss a');
+  const formatDate = (timestamp: number) => {
+    const date = moment(timestamp);
     if (!date.isValid()) return 'Invalid Date';
 
     const now = moment();
@@ -45,68 +36,16 @@ const CallLogScreen: React.FC = () => {
     return date.format('DD-MMM-YYYY');
   };
 
-  //  Fetch latest 20 logs (used for initial load & refresh)
-  const fetchInitialLogs = async () => {
-    try {
-      setIsFetching(true);
-      const logs = await CallLogs.load(20); // no filter
-      const filteredLogs = logs.filter((log: any) =>
-        selectedFilter === 'ALL' ? true : log.type === selectedFilter,
-      );
-
-      dispatch(setCallLogs(filteredLogs));
-      if (logs.length > 0) {
-        const newMin = Math.min(...logs.map((log: any) => log.timestamp));
-        dispatch(setMinTimestamp(newMin));
-      }
-    } catch (err) {
-      console.error('Error fetching initial logs:', err);
-    } finally {
-      setIsFetching(false);
-    }
-  };
-
-  const fetchMoreLogs = async () => {
-    if (isFetching || minTimestamp === null) return;
-    try {
-      setIsFetching(true);
-      const logs = await CallLogs.load(20, {maxTimestamp: minTimestamp - 1});
-      const filteredLogs = logs.filter((log: any) =>
-        selectedFilter === 'ALL' ? true : log.type === selectedFilter,
-      );
-
-      dispatch(appendCallLogs(filteredLogs));
-      if (logs.length > 0) {
-        const newMin = Math.min(...logs.map((log: any) => log.timestamp));
-        dispatch(setMinTimestamp(newMin));
-      }
-    } catch (err) {
-      console.error('Error fetching more logs:', err);
-    } finally {
-      setIsFetching(false);
-    }
-  };
-
-  //  Pull-to-refresh
-  const refreshCallLogs = async () => {
-    setRefreshing(true);
-    dispatch(setCallLogs([]));
-    dispatch(setMinTimestamp(null));
-    await fetchInitialLogs();
-    setRefreshing(false);
-  };
-
-  useEffect(() => {
-    refreshCallLogs();
-  }, [selectedFilter]);
-
-  const handleEndReached = () => {
-    if (!isFetching) fetchMoreLogs();
-  };
-
   const renderItem = ({item}: {item: any}) => (
     <TouchableOpacity
-      onPress={() => navigate('PersonCallLogs', {item})}
+      onPress={() =>
+        navigate('PersonCallLogs', {
+          item: {
+            ...item,
+            createdAt: item?.createdAt?.toISOString(),
+          },
+        })
+      }
       style={styles.itemContainer}>
       <View style={styles.itemContent}>
         <View style={styles.iconContainer}>
@@ -147,14 +86,6 @@ const CallLogScreen: React.FC = () => {
                 size={RFValue(14)}
               />
             )}
-            {item.type === 'UNKNOWN' && (
-              <Icon
-                name="arrow-bottom-left"
-                iconFamily="MaterialCommunityIcons"
-                color="green"
-                size={RFValue(14)}
-              />
-            )}
             {item.type === 'OUTGOING' && (
               <Icon
                 name="arrow-top-right"
@@ -163,29 +94,38 @@ const CallLogScreen: React.FC = () => {
                 size={RFValue(14)}
               />
             )}
-            <Text>{formatDate(item.dateTime)}</Text>
+            <Text>{formatDate(item.timestamp)}</Text>
           </View>
         </View>
       </View>
     </TouchableOpacity>
   );
 
-  const getKey = (item: any): string => `${item.phoneNumber}_${item.timestamp}`;
+  const getKey = (item: any): string => item.id;
 
-  const toggleMenu = useCallback(() => setIsMenuVisible(prev => !prev), []);
+  useEffect(() => {
+    if (callLogs.length > 0) {
+      console.log('Current call logs stats:', {
+        count: callLogs.length,
+        oldest: new Date(callLogs[callLogs.length - 1].timestamp),
+        newest: new Date(callLogs[0].timestamp),
+      });
+    }
+  }, [callLogs]);
 
   return (
     <View style={{flex: 1, paddingHorizontal: 20}}>
-      <Search onToggleMenu={toggleMenu} />
+      <Search onToggleMenu={() => setIsMenuVisible(!isMenuVisible)} />
+
       {isMenuVisible && (
         <TouchableOpacity
           activeOpacity={1}
-          onPress={toggleMenu}
+          onPress={() => setIsMenuVisible(false)}
           style={styles.overlay}>
           <View style={styles.modalPosition}>
             <TouchableOpacity
               onPress={() => {
-                toggleMenu();
+                setIsMenuVisible(false);
                 navigate('FilteredCallLogs', {type: 'INCOMING'});
               }}
               style={styles.modalContainer}>
@@ -200,7 +140,7 @@ const CallLogScreen: React.FC = () => {
 
             <TouchableOpacity
               onPress={() => {
-                toggleMenu();
+                setIsMenuVisible(false);
                 navigate('FilteredCallLogs', {type: 'OUTGOING'});
               }}
               style={styles.modalContainer}>
@@ -215,7 +155,7 @@ const CallLogScreen: React.FC = () => {
 
             <TouchableOpacity
               onPress={() => {
-                toggleMenu();
+                setIsMenuVisible(false);
                 navigate('FilteredCallLogs', {type: 'MISSED'});
               }}
               style={styles.modalContainer}>
@@ -231,22 +171,21 @@ const CallLogScreen: React.FC = () => {
         </TouchableOpacity>
       )}
 
-      {isFetching && callLogs.length === 0 && (
-        <ActivityIndicator size="large" />
-      )}
-
       <FlatList
         data={callLogs}
         renderItem={renderItem}
         keyExtractor={getKey}
-        onEndReached={handleEndReached}
-        onEndReachedThreshold={0.1}
-        onRefresh={refreshCallLogs}
-        refreshing={refreshing}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.5}
+        onRefresh={refresh}
+        refreshing={isRefreshing}
         ListFooterComponent={
-          isFetching && callLogs.length > 0 ? (
-            <Text>Loading more...</Text>
-          ) : null
+          <>
+            {hasMore ? <ActivityIndicator size="small" /> : null}
+            <Text style={{textAlign: 'center', padding: 10}}>
+              Showing {callLogs.length} of {totalCount} logs
+            </Text>
+          </>
         }
         showsVerticalScrollIndicator={false}
       />

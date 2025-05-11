@@ -113,9 +113,21 @@ const CallLogScreen: React.FC = () => {
     }
   }, [callLogs]);
 
+  const handleSearchSelect = (item: any) => {
+    navigate('PersonCallLogs', {
+      item: {
+        phoneNumber: item.phoneNumber,
+        name: item.name,
+      },
+    });
+  };
+
   return (
     <View style={{flex: 1, paddingHorizontal: 20}}>
-      <Search onToggleMenu={() => setIsMenuVisible(!isMenuVisible)} />
+      <Search
+        onToggleMenu={() => setIsMenuVisible(!isMenuVisible)}
+        onSelectItem={handleSearchSelect}
+      />
 
       {isMenuVisible && (
         <TouchableOpacity

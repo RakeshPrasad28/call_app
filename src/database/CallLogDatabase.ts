@@ -190,11 +190,11 @@ export const CallLogDatabase = {
           try {
             const validatedLog = validateCallLog(log);
             
-            console.log('Processing log:', {
-              phone: validatedLog.phoneNumber,
-              timestamp: new Date(validatedLog.timestamp),
-              type: validatedLog.type
-            });
+            // console.log('Processing log:', {
+            //   phone: validatedLog.phoneNumber,
+            //   timestamp: new Date(validatedLog.timestamp),
+            //   type: validatedLog.type
+            // });
 
             const existing = realm.objects('CallLog')
               .filtered('phoneNumber == $0 AND timestamp == $1', 

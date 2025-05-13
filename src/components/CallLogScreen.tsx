@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StyleSheet,
+  SafeAreaView,
+  Platform,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../state/store';
@@ -17,8 +19,10 @@ import {Avatar} from '@rneui/themed';
 import Search from './Search';
 import {Colors} from '../utility/constants';
 import {useCallLogs} from '../hooks/useCallLogs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const CallLogScreen: React.FC = () => {
+  const insets = useSafeAreaInsets();
   const {selectedFilter} = useSelector((state: RootState) => state.callLogs);
   const {callLogs, loadMore, refresh, isRefreshing, hasMore, totalCount} =
     useCallLogs(selectedFilter);
@@ -123,7 +127,8 @@ const CallLogScreen: React.FC = () => {
   };
 
   return (
-    <View style={{flex: 1, paddingHorizontal: 20}}>
+    <View style={{flex: 1, paddingHorizontal: 20,paddingTop: Platform.OS === 'ios' ? 0 : insets.top}}>
+      <SafeAreaView />
       <Search
         onToggleMenu={() => setIsMenuVisible(!isMenuVisible)}
         onSelectItem={handleSearchSelect}

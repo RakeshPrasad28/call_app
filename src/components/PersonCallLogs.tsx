@@ -26,7 +26,8 @@ interface ICallLog {
   dateTime: string;
   type: string;
   duration: number;
-  // Add other fields as needed
+  feedback?: string | null;
+  id?: string;
 }
 
 const PersonCallLogs = () => {
@@ -54,7 +55,7 @@ const PersonCallLogs = () => {
 
       setLogsForNumber(Array.from(results));
     } catch (error) {
-      // Handle error silently or show user feedback
+      console.log('Error loading call logs:', error);
     } finally {
       setIsLoading(false);
     }
@@ -64,17 +65,22 @@ const PersonCallLogs = () => {
     loadAllCallLogs();
   }, [loadAllCallLogs]);
 
-  const handleOpenModal = (key: string) => {
-    setCurrentKey(key);
+  const handleOpenModal = (item: ICallLog) => {
+    setCurrentKey(item.id);
+    setFeedbackText(item.feedback || '');
     setModalVisible(true);
   };
 
-  const handleSaveFeedback = () => {
+  const handleSaveFeedback = async () => {
     if (currentKey) {
-      setFeedbackMap(prev => ({
-        ...prev,
-        [currentKey]: feedbackText,
-      }));
+      const success = await CallLogDatabase.setFeedback(currentKey, feedbackText);
+      if (success) {
+        setLogsForNumber(prev => 
+          prev.map(log => 
+            log.id === currentKey ? {...log, feedback: feedbackText} : log
+          )
+        );
+      }
     }
     setModalVisible(false);
   };
@@ -111,21 +117,27 @@ const PersonCallLogs = () => {
   };
 
   const renderItem = ({item}: {item: ICallLog}) => {
-    const feedbackExists = Boolean(feedbackMap[item.dateTime]);
     return (
       <TouchableOpacity
-        style={[styles.callLogContainer, feedbackExists && styles.callLogWithFeedback]}
-        onPress={() => handleOpenModal(item.dateTime)}>
+        style={[styles.callLogContainer, item.feedback && styles.callLogWithFeedback]}
+        onPress={() => handleOpenModal(item)}>
         <View style={styles.callLogInfo}>
-          {item.type === 'MISSED' && <Icon name="call-missed" iconFamily="MaterialIcons" color="red" size={RFValue(18)} />}
-          {['INCOMING', 'UNKNOWN'].includes(item.type) && <Icon name="arrow-bottom-left" iconFamily="MaterialCommunityIcons" color="green" size={RFValue(18)} />}
-          {item.type === 'OUTGOING' && <Icon name="arrow-top-right" iconFamily="MaterialCommunityIcons" color="blue" size={RFValue(18)} />}
           <View style={styles.callLogText}>
             <Text style={styles.dateText}>{formatDate(item.dateTime)}</Text>
             <Text style={styles.typeText}>{item.type === 'UNKNOWN' ? 'INCOMING' : item.type}</Text>
           </View>
         </View>
+        <View style={{alignItems:"center"}}>
         <Text style={styles.durationText}>{item.duration ? formatTime(item.duration) : null}</Text>
+        {item.feedback && (
+          <Icon 
+            name="message-text" 
+            iconFamily="MaterialCommunityIcons" 
+            color={Colors.nightInManchestor} 
+            size={RFValue(14)} 
+          />
+        )}
+        </View>
       </TouchableOpacity>
     );
   };

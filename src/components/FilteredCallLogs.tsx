@@ -5,13 +5,14 @@ import {
   StyleSheet,
   Pressable,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useRoute} from '@react-navigation/native';
 import {RFValue} from 'react-native-responsive-fontsize';
 import moment from 'moment';
 import Icon from './common/Icon';
-import {goBack} from '../utility/NavigationUtils';
+import {goBack, navigate} from '../utility/NavigationUtils';
 import {Avatar} from '@rneui/themed';
 import {Colors} from '../utility/constants';
 import CallLogDatabase from '../database/CallLogDatabase';
@@ -23,6 +24,9 @@ interface ICallLog {
   type: string;
   duration: number;
   name?: string;
+  createdAt?: Date;
+  id?: string;
+  feedback?: string | null;
 }
 
 const FilteredCallLogs = () => {
@@ -36,11 +40,12 @@ const FilteredCallLogs = () => {
     try {
       const realm = await CallLogDatabase.initialize();
       let results;
-      
+
       if (type === 'ALL') {
         results = realm.objects<ICallLog>('CallLog').sorted('timestamp', true);
       } else {
-        results = realm.objects<ICallLog>('CallLog')
+        results = realm
+          .objects<ICallLog>('CallLog')
           .filtered('type == $0', type)
           .sorted('timestamp', true);
       }
@@ -77,12 +82,17 @@ const FilteredCallLogs = () => {
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
       const remainingSeconds = seconds % 60;
-      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+        2,
+        '0',
+      )}:${String(remainingSeconds).padStart(2, '0')}`;
     }
 
     if (seconds >= 60) {
       const minutes = Math.floor(seconds / 60);
-      return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+      return `${String(minutes).padStart(2, '0')}:${String(
+        seconds % 60,
+      ).padStart(2, '0')}`;
     }
 
     return `${seconds}s`;
@@ -90,36 +100,66 @@ const FilteredCallLogs = () => {
 
   const renderItem = ({item}: {item: ICallLog}) => {
     return (
-      <View style={styles.callLogContainer}>
+      <TouchableOpacity
+        style={styles.callLogContainer}
+        onPress={() =>
+          navigate('PersonCallLogs', {
+            item: {
+              ...item,
+              createdAt: item?.createdAt?.toISOString(),
+            },
+          })
+        }>
         <View style={styles.callLogInfo}>
           {item.type === 'MISSED' && (
-            <Icon name="call-missed" iconFamily="MaterialIcons" color="red" size={RFValue(18)} />
+            <Icon
+              name="call-missed"
+              iconFamily="MaterialIcons"
+              color="red"
+              size={RFValue(18)}
+            />
           )}
           {['INCOMING', 'UNKNOWN'].includes(item.type) && (
-            <Icon name="arrow-bottom-left" iconFamily="MaterialCommunityIcons" color="green" size={RFValue(18)} />
+            <Icon
+              name="arrow-bottom-left"
+              iconFamily="MaterialCommunityIcons"
+              color="green"
+              size={RFValue(18)}
+            />
           )}
           {item.type === 'OUTGOING' && (
-            <Icon name="arrow-top-right" iconFamily="MaterialCommunityIcons" color="blue" size={RFValue(18)} />
+            <Icon
+              name="arrow-top-right"
+              iconFamily="MaterialCommunityIcons"
+              color="blue"
+              size={RFValue(18)}
+            />
           )}
-          
+
           <View style={styles.callLogText}>
-            <Text style={styles.phoneText}>{item.name || item.phoneNumber}</Text>
+            <Text style={styles.phoneText}>
+              {item.name || item.phoneNumber}
+            </Text>
             <Text style={styles.dateText}>{formatDate(item.timestamp)}</Text>
           </View>
         </View>
         <Text style={styles.durationText}>
           {item.duration ? formatTime(item.duration) : null}
         </Text>
-      </View>
+      </TouchableOpacity>
     );
   };
 
   const getTitle = () => {
     switch (type) {
-      case 'INCOMING': return 'Incoming Calls';
-      case 'OUTGOING': return 'Outgoing Calls';
-      case 'MISSED': return 'Missed Calls';
-      default: return 'All Calls';
+      case 'INCOMING':
+        return 'Incoming Calls';
+      case 'OUTGOING':
+        return 'Outgoing Calls';
+      case 'MISSED':
+        return 'Missed Calls';
+      default:
+        return 'All Calls';
     }
   };
 
@@ -135,7 +175,12 @@ const FilteredCallLogs = () => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Pressable onPress={goBack} style={styles.backButton}>
-          <Icon name="arrow-back-sharp" iconFamily="Ionicons" size={RFValue(24)} color={Colors.black} />
+          <Icon
+            name="arrow-back-sharp"
+            iconFamily="Ionicons"
+            size={RFValue(24)}
+            color={Colors.black}
+          />
         </Pressable>
         {/* <Text style={styles.titleText}>{getTitle()} ({filteredLogs.length})</Text> */}
         <Text style={styles.titleText}>{getTitle()}</Text>

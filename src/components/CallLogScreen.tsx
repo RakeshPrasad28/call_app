@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useState, useEffect, useRef} from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,8 @@ import {
   StyleSheet,
   SafeAreaView,
   Platform,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../state/store';
@@ -19,14 +21,23 @@ import {Avatar} from '@rneui/themed';
 import Search from './Search';
 import {Colors} from '../utility/constants';
 import {useCallLogs} from '../hooks/useCallLogs';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {screenHeight} from '../utility/Scaling';
 
 const CallLogScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const {selectedFilter} = useSelector((state: RootState) => state.callLogs);
   const {callLogs, loadMore, refresh, isRefreshing, hasMore, totalCount} =
     useCallLogs(selectedFilter);
+
   const [isMenuVisible, setIsMenuVisible] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const flatListRef = useRef<FlatList>(null);
+
+  const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+    const offsetY = event.nativeEvent.contentOffset.y;
+    setShowScrollTop(offsetY > 500);
+  };
 
   const formatDate = (timestamp: number) => {
     const date = moment(timestamp);
@@ -127,7 +138,11 @@ const CallLogScreen: React.FC = () => {
   };
 
   return (
-    <View style={{flex: 1, paddingHorizontal: 20,paddingTop: Platform.OS === 'ios' ? 0 : insets.top}}>
+    <View
+      style={[
+        styles.container,
+        {paddingTop: Platform.OS === 'ios' ? 0 : insets.top},
+      ]}>
       <SafeAreaView />
       <Search
         onToggleMenu={() => setIsMenuVisible(!isMenuVisible)}
@@ -135,57 +150,59 @@ const CallLogScreen: React.FC = () => {
       />
 
       {isMenuVisible && (
-        <TouchableOpacity
-          activeOpacity={1}
-          onPress={() => setIsMenuVisible(false)}
-          style={styles.overlay}>
-          <View style={styles.modalPosition}>
-            <TouchableOpacity
-              onPress={() => {
-                setIsMenuVisible(false);
-                navigate('FilteredCallLogs', {type: 'INCOMING'});
-              }}
-              style={styles.modalContainer}>
-              <Icon
-                name="arrow-bottom-left"
-                iconFamily="MaterialCommunityIcons"
-                color="green"
-                size={RFValue(14)}
-              />
-              <Text style={styles.modalText}>Incoming Calls</Text>
-            </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity
+            activeOpacity={1}
+            onPress={() => setIsMenuVisible(false)}
+            style={styles.modalBackground}>
+            <View style={[styles.modalPosition, {top: insets.top + 60}]}>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsMenuVisible(false);
+                  navigate('FilteredCallLogs', {type: 'INCOMING'});
+                }}
+                style={styles.modalContainer}>
+                <Icon
+                  name="arrow-bottom-left"
+                  iconFamily="MaterialCommunityIcons"
+                  color="green"
+                  size={RFValue(14)}
+                />
+                <Text style={styles.modalText}>Incoming Calls</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
-                setIsMenuVisible(false);
-                navigate('FilteredCallLogs', {type: 'OUTGOING'});
-              }}
-              style={styles.modalContainer}>
-              <Icon
-                name="arrow-top-right"
-                iconFamily="MaterialCommunityIcons"
-                color="blue"
-                size={RFValue(14)}
-              />
-              <Text style={styles.modalText}>Outgoing Calls</Text>
-            </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsMenuVisible(false);
+                  navigate('FilteredCallLogs', {type: 'OUTGOING'});
+                }}
+                style={styles.modalContainer}>
+                <Icon
+                  name="arrow-top-right"
+                  iconFamily="MaterialCommunityIcons"
+                  color="blue"
+                  size={RFValue(14)}
+                />
+                <Text style={styles.modalText}>Outgoing Calls</Text>
+              </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={() => {
-                setIsMenuVisible(false);
-                navigate('FilteredCallLogs', {type: 'MISSED'});
-              }}
-              style={styles.modalContainer}>
-              <Icon
-                name="call-missed"
-                iconFamily="MaterialIcons"
-                color="red"
-                size={RFValue(14)}
-              />
-              <Text style={styles.modalText}>Missed Calls</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  setIsMenuVisible(false);
+                  navigate('FilteredCallLogs', {type: 'MISSED'});
+                }}
+                style={styles.modalContainer}>
+                <Icon
+                  name="call-missed"
+                  iconFamily="MaterialIcons"
+                  color="red"
+                  size={RFValue(14)}
+                />
+                <Text style={styles.modalText}>Missed Calls</Text>
+              </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+        </View>
       )}
 
       <FlatList
@@ -205,16 +222,37 @@ const CallLogScreen: React.FC = () => {
           </>
         }
         showsVerticalScrollIndicator={false}
+        ref={flatListRef}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
+      {showScrollTop && (
+        <TouchableOpacity
+          style={styles.scrollTopButton}
+          onPress={() => {
+            flatListRef.current?.scrollToOffset({offset: 0, animated: true});
+          }}
+          activeOpacity={0.8}>
+          <Icon
+            name="arrow-up-circle"
+            iconFamily="Ionicons"
+            size={RFValue(40)}
+            color={Colors.nightInManchestor}
+          />
+        </TouchableOpacity>
+      )}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
   modalPosition: {
     position: 'absolute',
-    right: 20,
-    top: 60,
+    right: 28,
     backgroundColor: Colors.white,
     padding: 10,
     borderRadius: 8,
@@ -223,7 +261,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 5,
-    zIndex: 10,
+    zIndex: 11,
   },
   modalContainer: {
     flexDirection: 'row',
@@ -234,15 +272,17 @@ const styles = StyleSheet.create({
   modalText: {
     fontSize: RFValue(18),
   },
-  overlay: {
+  modalOverlay: {
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
+    zIndex: 10,
+  },
+  modalBackground: {
+    flex: 1,
     backgroundColor: 'rgba(0,0,0,0.1)',
-    zIndex: 9,
-    pointerEvents: 'box-none',
   },
   iconContainer: {
     width: 50,
@@ -264,6 +304,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  scrollTopButton: {
+    position: 'absolute',
+    bottom: screenHeight - 720,
+    right: 20,
+    backgroundColor: Colors.white,
+    borderRadius: 30,
+    padding: 5,
+    shadowColor: Colors.black,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.2,
+    shadowRadius: 5,
+    elevation: 5,
   },
 });
 

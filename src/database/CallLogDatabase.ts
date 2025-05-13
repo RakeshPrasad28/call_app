@@ -17,8 +17,27 @@ export interface ICallLog extends Omit<ICallLogInput, 'timestamp' | 'duration' |
   rawType: number;
   synced: boolean;
   createdAt: Date;
+  feedback?: string | null;
 }
 
+// class CallLogSchema extends Realm.Object {
+//   static schema: Realm.ObjectSchema = {
+//     name: 'CallLog',
+//     primaryKey: 'id',
+//     properties: {
+//       id: 'string',
+//       phoneNumber: 'string',
+//       timestamp: 'int',
+//       duration: 'int',
+//       type: 'string',
+//       dateTime: 'string',
+//       name: 'string?',
+//       rawType: 'int',
+//       synced: { type: 'bool', default: false },
+//       createdAt: 'date',
+//     },
+//   };
+// }
 class CallLogSchema extends Realm.Object {
   static schema: Realm.ObjectSchema = {
     name: 'CallLog',
@@ -34,13 +53,14 @@ class CallLogSchema extends Realm.Object {
       rawType: 'int',
       synced: { type: 'bool', default: false },
       createdAt: 'date',
+      feedback: 'string?', // Add this new property
     },
   };
 }
 
 const databaseOptions: Realm.Configuration = {
   schema: [CallLogSchema],
-  schemaVersion: 2, 
+  schemaVersion: 3, 
 };
 
 let realmInstance: Realm | null = null;
@@ -176,6 +196,41 @@ export const CallLogDatabase = {
     });
   },
 
+  setFeedback: async (callLogId: string, feedback: string): Promise<boolean> => {
+    try {
+      const realm = await getRealmInstance();
+      realm.write(() => {
+        const log = realm.objectForPrimaryKey('CallLog', callLogId);
+        if (log) {
+          (log as any).feedback = feedback;
+        }
+      });
+      return true;
+    } catch (error) {
+      console.error('Error setting feedback:', error);
+      return false;
+    }
+  },
+
+  getFeedback: async (callLogId: string): Promise<string | null> => {
+    try {
+      const realm = await getRealmInstance();
+      const log = realm.objectForPrimaryKey('CallLog', callLogId);
+      return log ? (log as any).feedback : null;
+    } catch (error) {
+      console.error('Error getting feedback:', error);
+      return null;
+    }
+  },
+
+  searchFeedback: async (query: string): Promise<ICallLog[]> => {
+    const realm = await getRealmInstance();
+    const results = realm.objects('CallLog')
+      .filtered('feedback CONTAINS[c] $0', query)
+      .sorted('timestamp', true);
+    return Array.from(results) as ICallLog[];
+  },
+
   storeCallLogs: async (logs: ICallLogInput[]): Promise<{ success: boolean; error?: string }> => {
     try {
       const realm = await getRealmInstance();
@@ -183,19 +238,11 @@ export const CallLogDatabase = {
       let duplicateCount = 0;
       let errorCount = 0;
 
-      console.log('Attempting to store batch of', logs.length, 'logs');
-      
       realm.write(() => {
         logs.forEach(log => {
           try {
             const validatedLog = validateCallLog(log);
             
-            // console.log('Processing log:', {
-            //   phone: validatedLog.phoneNumber,
-            //   timestamp: new Date(validatedLog.timestamp),
-            //   type: validatedLog.type
-            // });
-
             const existing = realm.objects('CallLog')
               .filtered('phoneNumber == $0 AND timestamp == $1', 
                 validatedLog.phoneNumber, 
@@ -206,6 +253,7 @@ export const CallLogDatabase = {
               realm.create('CallLog', {
                 ...validatedLog,
                 synced: false,
+                feedback: null, // Initialize feedback as null
                 createdAt: new Date(),
               });
               storedCount++;
@@ -219,21 +267,15 @@ export const CallLogDatabase = {
         });
       });
 
-      console.log(
-        `Stored ${storedCount} logs | ` +
-        `Duplicates: ${duplicateCount} | ` +
-        `Errors: ${errorCount}`
-      );
-      
       return { success: true };
     } catch (error) {
-      console.error('Storage transaction failed:', error);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown storage error',
       };
     }
   },
+
 
   getTotalCount: async (): Promise<number> => {
     const realm = await getRealmInstance();

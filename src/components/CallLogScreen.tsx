@@ -33,6 +33,13 @@ const CallLogScreen: React.FC = () => {
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
+  useEffect(() => {
+    if (callLogs.length > 0) {
+      setInitialLoadComplete(true);
+    }
+  }, [callLogs]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -204,7 +211,12 @@ const CallLogScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       )}
-
+      {!initialLoadComplete && callLogs.length === 0 ? (
+  <View style={styles.loadingContainer}>
+    <ActivityIndicator size="large" />
+    <Text style={styles.loadingText}>Loading call history...</Text>
+  </View>
+) : (
       <FlatList
         data={callLogs}
         renderItem={renderItem}
@@ -225,7 +237,7 @@ const CallLogScreen: React.FC = () => {
         ref={flatListRef}
         onScroll={handleScroll}
         scrollEventThrottle={16}
-      />
+      />)}
       {showScrollTop && (
         <TouchableOpacity
           style={styles.scrollTopButton}
@@ -317,6 +329,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 5,
     elevation: 5,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 10,
+    fontSize: RFValue(16),
+    color: Colors.carbon,
   },
 });
 

@@ -14,8 +14,8 @@ export const useCallLogs = (
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const dispatch = useDispatch();
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
-  // Add these methods to your existing useCallLogs hook
 const getFilteredLogsPaginated = useCallback(async (
   filterType: 'ALL' | 'INCOMING' | 'OUTGOING' | 'MISSED',
   offset: number,
@@ -67,38 +67,36 @@ const getFilteredLogsCount = useCallback(async (
   }
 }, []);
 
-  const loadInitialData = useCallback(async () => {
-    dispatch(setLoading(true));
-    try {
-      const realm = await CallLogDatabase.initialize();
-      let query = realm.objects<ICallLog>('CallLog').sorted('timestamp', true);
-
-      if (filter !== 'ALL') {
-        query = query.filtered('type == $0', filter);
-      }
-
-      const total = query.length;
-      const initialBatch = Array.from(query.slice(0, BATCH_SIZE));
-
-      setCallLogs(initialBatch);
-      setOffset(initialBatch.length);
-      setHasMore(initialBatch.length < total);
-      setTotalCount(total);
-      
-      console.log(`Initial load: ${initialBatch.length} of ${total} logs`);
-      
-      if (initialBatch.length > 0) {
-        console.log('Sample log dates:', {
-          first: new Date(initialBatch[0].timestamp),
-          last: new Date(initialBatch[initialBatch.length - 1].timestamp)
-        });
-      }
-    } catch (error) {
-      console.error('Error loading initial data:', error);
-    } finally {
-      dispatch(setLoading(false));
+const loadInitialData = useCallback(async () => {
+  dispatch(setLoading(true));
+  try {
+    const realm = await CallLogDatabase.initialize();
+    
+    let attempts = 0;
+    while (realm.objects('CallLog').length === 0 && attempts < 5) {
+      await new Promise(resolve => setTimeout(resolve, 300));
+      attempts++;
     }
-  }, [filter, dispatch]);
+
+    let query = realm.objects<ICallLog>('CallLog').sorted('timestamp', true);
+    if (filter !== 'ALL') {
+      query = query.filtered('type == $0', filter);
+    }
+
+    const total = query.length;
+    const initialBatch = Array.from(query.slice(0, BATCH_SIZE * 2)); 
+
+    setCallLogs(initialBatch);
+    setOffset(initialBatch.length);
+    setHasMore(initialBatch.length < total);
+    setTotalCount(total);
+    
+  } catch (error) {
+    console.error('Error loading initial data:', error);
+  } finally {
+    dispatch(setLoading(false));
+  }
+}, [filter, dispatch]);
 
   const loadMore = useCallback(async () => {
     if (!hasMore || isRefreshing) return;
@@ -139,6 +137,15 @@ const getFilteredLogsCount = useCallback(async (
       setIsRefreshing(false);
     }
   }, [loadInitialData]);
+
+  useEffect(() => {
+    if (!isInitialLoadComplete && callLogs.length === 0) {
+      const interval = setInterval(() => {
+        refresh();
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [isInitialLoadComplete, callLogs.length, refresh]);
 
   useEffect(() => {
     loadInitialData();

@@ -53,7 +53,7 @@ class CallLogSchema extends Realm.Object {
       rawType: 'int',
       synced: { type: 'bool', default: false },
       createdAt: 'date',
-      feedback: 'string?', // Add this new property
+      feedback: 'string?', 
     },
   };
 }

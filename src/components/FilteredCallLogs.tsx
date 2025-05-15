@@ -6,6 +6,7 @@ import {
   Pressable,
   ActivityIndicator,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useRoute} from '@react-navigation/native';
@@ -16,6 +17,7 @@ import {goBack, navigate} from '../utility/NavigationUtils';
 import {Avatar} from '@rneui/themed';
 import {Colors} from '../utility/constants';
 import CallLogDatabase from '../database/CallLogDatabase';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface ICallLog {
   phoneNumber: string;
@@ -30,6 +32,7 @@ interface ICallLog {
 }
 
 const FilteredCallLogs = () => {
+  const insets = useSafeAreaInsets()
   const route = useRoute();
   const {type = 'ALL'} = route.params || {};
   const [filteredLogs, setFilteredLogs] = useState<ICallLog[]>([]);
@@ -172,7 +175,7 @@ const FilteredCallLogs = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container,{paddingTop: Platform.OS === 'ios' ? 0 : insets.top}]}>
       <View style={styles.header}>
         <Pressable onPress={goBack} style={styles.backButton}>
           <Icon

@@ -9,6 +9,7 @@ import {
   TextInput,
   Button,
   ActivityIndicator,
+  Platform,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useRoute} from '@react-navigation/native';
@@ -19,6 +20,7 @@ import {goBack} from '../utility/NavigationUtils';
 import {Avatar} from '@rneui/themed';
 import {Colors} from '../utility/constants';
 import CallLogDatabase from '../database/CallLogDatabase';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
 
 interface ICallLog {
   phoneNumber: string;
@@ -31,6 +33,7 @@ interface ICallLog {
 }
 
 const PersonCallLogs = () => {
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const params = route.params as {item?: {phoneNumber: string; name?: string}};
   const phoneNumber = params?.item?.phoneNumber;
@@ -49,7 +52,8 @@ const PersonCallLogs = () => {
     setIsLoading(true);
     try {
       const realm = await CallLogDatabase.initialize();
-      const results = realm.objects<ICallLog>('CallLog')
+      const results = realm
+        .objects<ICallLog>('CallLog')
         .filtered('phoneNumber == $0', phoneNumber)
         .sorted('timestamp', true);
 
@@ -73,12 +77,15 @@ const PersonCallLogs = () => {
 
   const handleSaveFeedback = async () => {
     if (currentKey) {
-      const success = await CallLogDatabase.setFeedback(currentKey, feedbackText);
+      const success = await CallLogDatabase.setFeedback(
+        currentKey,
+        feedbackText,
+      );
       if (success) {
-        setLogsForNumber(prev => 
-          prev.map(log => 
-            log.id === currentKey ? {...log, feedback: feedbackText} : log
-          )
+        setLogsForNumber(prev =>
+          prev.map(log =>
+            log.id === currentKey ? {...log, feedback: feedbackText} : log,
+          ),
         );
       }
     }
@@ -105,12 +112,17 @@ const PersonCallLogs = () => {
       const hours = Math.floor(seconds / 3600);
       const minutes = Math.floor((seconds % 3600) / 60);
       const remainingSeconds = seconds % 60;
-      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(remainingSeconds).padStart(2, '0')}`;
+      return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(
+        2,
+        '0',
+      )}:${String(remainingSeconds).padStart(2, '0')}`;
     }
 
     if (seconds >= 60) {
       const minutes = Math.floor(seconds / 60);
-      return `${String(minutes).padStart(2, '0')}:${String(seconds % 60).padStart(2, '0')}`;
+      return `${String(minutes).padStart(2, '0')}:${String(
+        seconds % 60,
+      ).padStart(2, '0')}`;
     }
 
     return `${seconds}s`;
@@ -119,24 +131,31 @@ const PersonCallLogs = () => {
   const renderItem = ({item}: {item: ICallLog}) => {
     return (
       <TouchableOpacity
-        style={[styles.callLogContainer, item.feedback && styles.callLogWithFeedback]}
+        style={[
+          styles.callLogContainer,
+          item.feedback && styles.callLogWithFeedback,
+        ]}
         onPress={() => handleOpenModal(item)}>
         <View style={styles.callLogInfo}>
           <View style={styles.callLogText}>
             <Text style={styles.dateText}>{formatDate(item.dateTime)}</Text>
-            <Text style={styles.typeText}>{item.type === 'UNKNOWN' ? 'INCOMING' : item.type}</Text>
+            <Text style={styles.typeText}>
+              {item.type === 'UNKNOWN' ? 'INCOMING' : item.type}
+            </Text>
           </View>
         </View>
-        <View style={{alignItems:"center"}}>
-        <Text style={styles.durationText}>{item.duration ? formatTime(item.duration) : null}</Text>
-        {item.feedback && (
-          <Icon 
-            name="message-text" 
-            iconFamily="MaterialCommunityIcons" 
-            color={Colors.nightInManchestor} 
-            size={RFValue(14)} 
-          />
-        )}
+        <View style={{alignItems: 'center'}}>
+          <Text style={styles.durationText}>
+            {item.duration ? formatTime(item.duration) : null}
+          </Text>
+          {item.feedback && (
+            <Icon
+              name="message-text"
+              iconFamily="MaterialCommunityIcons"
+              color={Colors.nightInManchestor}
+              size={RFValue(14)}
+            />
+          )}
         </View>
       </TouchableOpacity>
     );
@@ -151,16 +170,35 @@ const PersonCallLogs = () => {
   }
 
   return (
-    <View style={styles.container}>
+    <View
+      style={[
+        styles.container,
+        {paddingTop: Platform.OS === 'ios' ? 0 : insets.top},
+      ]}>
       <View style={styles.header}>
         <Pressable onPress={goBack} style={{alignSelf: 'flex-start'}}>
-          <Icon name="arrow-back-sharp" iconFamily="Ionicons" size={RFValue(24)} color={Colors.black} />
+          <Icon
+            name="arrow-back-sharp"
+            iconFamily="Ionicons"
+            size={RFValue(24)}
+            color={Colors.black}
+          />
         </Pressable>
         <View style={styles.iconContainer}>
           {name ? (
-            <Avatar size={80} rounded title={name[0]} containerStyle={{backgroundColor: Colors.nightInManchestor}} />
+            <Avatar
+              size={80}
+              rounded
+              title={name[0]}
+              containerStyle={{backgroundColor: Colors.nightInManchestor}}
+            />
           ) : (
-            <Icon name="person" iconFamily="Ionicons" color={Colors.nightInManchestor} size={RFValue(24)} />
+            <Icon
+              name="person"
+              iconFamily="Ionicons"
+              color={Colors.nightInManchestor}
+              size={RFValue(24)}
+            />
           )}
         </View>
         <Text style={styles.nameText}>{name || phoneNumber}</Text>
@@ -183,7 +221,12 @@ const PersonCallLogs = () => {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Feedback</Text>
               <Pressable onPress={() => setModalVisible(false)}>
-                <Icon name="close-circle-outline" iconFamily="Ionicons" size={RFValue(30)} color={Colors.black} />
+                <Icon
+                  name="close-circle-outline"
+                  iconFamily="Ionicons"
+                  size={RFValue(30)}
+                  color={Colors.black}
+                />
               </Pressable>
             </View>
             <TextInput

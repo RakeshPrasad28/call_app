@@ -10,6 +10,7 @@ import {
   Platform,
   NativeSyntheticEvent,
   NativeScrollEvent,
+  BackHandler,
 } from 'react-native';
 import {useDispatch, useSelector} from 'react-redux';
 import {RootState} from '../state/store';
@@ -23,6 +24,7 @@ import {Colors} from '../utility/constants';
 import {useCallLogs} from '../hooks/useCallLogs';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {screenHeight} from '../utility/Scaling';
+import { useFocusEffect } from '@react-navigation/native';
 
 const CallLogScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -34,6 +36,22 @@ const CallLogScreen: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const onBackPress = () => {
+        BackHandler.exitApp();
+        return true;
+      };
+  
+      const backHandler = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+  
+      return () => backHandler.remove(); 
+    }, [])
+  );
 
   useEffect(() => {
     if (callLogs.length > 0) {

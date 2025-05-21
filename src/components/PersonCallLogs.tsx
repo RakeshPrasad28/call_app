@@ -22,6 +22,8 @@ import {Avatar} from '@rneui/themed';
 import {Colors} from '../utility/constants';
 import CallLogDatabase from '../database/CallLogDatabase';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {useSelector} from 'react-redux';
+import {RootState} from '../state/store';
 
 interface ICallLog {
   phoneNumber: string;
@@ -46,6 +48,7 @@ const PersonCallLogs = () => {
   const [currentKey, setCurrentKey] = useState<string>('');
   const [feedbackText, setFeedbackText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
 
   const loadAllCallLogs = useCallback(async () => {
     if (!phoneNumber) return;
@@ -135,25 +138,43 @@ const PersonCallLogs = () => {
         style={[
           styles.callLogContainer,
           item.feedback && styles.callLogWithFeedback,
+          {
+            backgroundColor: darkMode ? '#2C2C2C' : Colors.white, 
+            shadowColor: darkMode ? 'rgba(255, 255, 255, 0.2)' : Colors.black,
+          },
         ]}
         onPress={() => handleOpenModal(item)}>
         <View style={styles.callLogInfo}>
           <View style={styles.callLogText}>
-            <Text style={styles.dateText}>{formatDate(item.dateTime)}</Text>
-            <Text style={styles.typeText}>
+            <Text
+              style={[
+                styles.dateText,
+                {color: darkMode ? Colors.white : Colors.stoneCold},
+              ]}>
+              {formatDate(item.dateTime)}
+            </Text>
+            <Text
+              style={[
+                styles.typeText,
+                {color: darkMode ? Colors.white : Colors.argent},
+              ]}>
               {item.type === 'UNKNOWN' ? 'INCOMING' : item.type}
             </Text>
           </View>
         </View>
         <View style={{alignItems: 'center'}}>
-          <Text style={styles.durationText}>
+          <Text
+            style={[
+              styles.durationText,
+              {color: darkMode ? Colors.white : Colors.carbon},
+            ]}>
             {item.duration ? formatTime(item.duration) : null}
           </Text>
           {item.feedback && (
             <Icon
               name="message-text"
               iconFamily="MaterialCommunityIcons"
-              color={Colors.nightInManchestor}
+              color={darkMode ? Colors.white : Colors.nightInManchestor}
               size={RFValue(14)}
             />
           )}
@@ -165,7 +186,9 @@ const PersonCallLogs = () => {
   if (!phoneNumber) {
     return (
       <View style={styles.container}>
-        <Text>No phone number provided</Text>
+        <Text style={{color: darkMode ? Colors.white : Colors.black}}>
+          No phone number provided
+        </Text>
       </View>
     );
   }
@@ -175,15 +198,19 @@ const PersonCallLogs = () => {
       style={[
         styles.container,
         {paddingTop: Platform.OS === 'ios' ? 0 : insets.top},
+        {backgroundColor: darkMode ? '#121212' : '#f5f5f5'}, 
       ]}>
-        <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />
+      <StatusBar
+        backgroundColor={darkMode ? '#121212' : Colors.white}
+        barStyle={darkMode ? 'light-content' : 'dark-content'}
+      />
       <View style={styles.header}>
         <Pressable onPress={goBack} style={{alignSelf: 'flex-start'}}>
           <Icon
             name="arrow-back-sharp"
             iconFamily="Ionicons"
             size={RFValue(24)}
-            color={Colors.black}
+            color={darkMode ? Colors.white : Colors.black}
           />
         </Pressable>
         <View style={styles.iconContainer}>
@@ -203,7 +230,13 @@ const PersonCallLogs = () => {
             />
           )}
         </View>
-        <Text style={styles.nameText}>{name || phoneNumber}</Text>
+        <Text
+          style={[
+            styles.nameText,
+            {color: darkMode ? Colors.white : Colors.black},
+          ]}>
+          {name || phoneNumber}
+        </Text>
       </View>
 
       {isLoading ? (
@@ -219,26 +252,45 @@ const PersonCallLogs = () => {
 
       <Modal visible={modalVisible} transparent animationType="slide">
         <View style={styles.modalContainer}>
-          <View style={styles.modalContent}>
+          <View
+            style={[
+              styles.modalContent,
+              {backgroundColor: darkMode ? '#2C2C2C' : Colors.white},
+            ]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Feedback</Text>
+              <Text
+                style={[
+                  styles.modalTitle,
+                  {color: darkMode ? Colors.white : Colors.black},
+                ]}>
+                Feedback
+              </Text>
               <Pressable onPress={() => setModalVisible(false)}>
                 <Icon
                   name="close-circle-outline"
                   iconFamily="Ionicons"
                   size={RFValue(30)}
-                  color={Colors.black}
+                  color={darkMode ? Colors.white : Colors.black}
                 />
               </Pressable>
             </View>
             <TextInput
-              style={styles.input}
+              style={[
+                styles.input,
+                {
+                  backgroundColor: darkMode ? '#121212' : Colors.white,
+                  color: darkMode ? Colors.white : Colors.black,
+                },
+              ]}
               placeholder="Enter feedback..."
               value={feedbackText}
               onChangeText={setFeedbackText}
               multiline
             />
-            <Button title="Save" onPress={handleSaveFeedback} />
+            <Button
+              title="Save"
+              onPress={handleSaveFeedback}
+            />
           </View>
         </View>
       </Modal>
@@ -249,7 +301,6 @@ const PersonCallLogs = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.doctor,
     paddingHorizontal: 20,
     paddingTop: 20,
   },
@@ -261,22 +312,20 @@ const styles = StyleSheet.create({
   nameText: {
     fontSize: RFValue(24),
     fontWeight: 'bold',
-    color: Colors.carbon,
   },
   callLogContainer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 15,
-    backgroundColor: Colors.white,
-    shadowColor: Colors.black,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    elevation: 3,
     paddingHorizontal: 15,
     paddingVertical: 10,
     borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+    elevation: 4,
   },
   callLogInfo: {
     flexDirection: 'row',
@@ -288,15 +337,12 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: RFValue(16),
-    color: Colors.stoneCold,
   },
   typeText: {
     fontSize: RFValue(12),
-    color: Colors.argent,
   },
   durationText: {
     fontSize: RFValue(14),
-    color: Colors.carbon,
     fontWeight: '500',
   },
   iconContainer: {
@@ -317,7 +363,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: '85%',
-    backgroundColor: Colors.white,
     borderRadius: 10,
     padding: 20,
     elevation: 5,
@@ -325,7 +370,6 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: RFValue(16),
     fontWeight: 'bold',
-    color: Colors.black,
   },
   input: {
     borderWidth: 1,
@@ -343,7 +387,7 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   callLogWithFeedback: {
-    backgroundColor: Colors.titaniumWhite,
+    backgroundColor: Colors.stoneCold,
   },
   loader: {
     flex: 1,

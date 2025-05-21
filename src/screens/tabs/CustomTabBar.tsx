@@ -5,13 +5,16 @@ import {useSharedState} from './SharedContext';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import Animated, {useAnimatedStyle} from 'react-native-reanimated';
 import {RFValue} from 'react-native-responsive-fontsize';
-import { HomeTabIcon, SettingsTabIcon } from './TabIcon';
+import { HomeTabIcon, LogsTabIcon, SettingsTabIcon } from './TabIcon';
 import { BOTTOM_TAB_HEIGHT, Colors, Fonts } from '../../utility/constants';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../state/store';
 
 const CustomTabBar: FC<BottomTabBarProps> = props => {
   const {translationY} = useSharedState();
   const {state, navigation} = props;
   const bottom = useSafeAreaInsets();
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -24,6 +27,7 @@ const CustomTabBar: FC<BottomTabBarProps> = props => {
         styles.tabBarContainer,
         animatedStyle,
         {paddingBottom: bottom.bottom},
+        {backgroundColor: darkMode ? Colors.cerebralGrey : Colors.primary},
       ]}>
       {state.routes?.map((route, index) => {
         const isFocused = state.index === index;
@@ -51,6 +55,7 @@ const CustomTabBar: FC<BottomTabBarProps> = props => {
             style={styles.tabItem}>
                 {route.name === "Home" && <HomeTabIcon focused={isFocused}/>}
                 {route.name === "Settings" && <SettingsTabIcon focused={isFocused}/>}
+                {route.name === "Logs" && <LogsTabIcon focused={isFocused}/>}
             </TouchableOpacity>
         );
       })}

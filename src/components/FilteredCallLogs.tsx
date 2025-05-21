@@ -18,7 +18,9 @@ import {goBack, navigate} from '../utility/NavigationUtils';
 import {Avatar} from '@rneui/themed';
 import {Colors} from '../utility/constants';
 import CallLogDatabase from '../database/CallLogDatabase';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import {RootState} from '../state/store';
+import {useSelector} from 'react-redux';
 
 interface ICallLog {
   phoneNumber: string;
@@ -33,11 +35,12 @@ interface ICallLog {
 }
 
 const FilteredCallLogs = () => {
-  const insets = useSafeAreaInsets()
+  const insets = useSafeAreaInsets();
   const route = useRoute();
   const {type = 'ALL'} = route.params || {};
   const [filteredLogs, setFilteredLogs] = useState<ICallLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
 
   const loadFilteredCallLogs = useCallback(async () => {
     setIsLoading(true);
@@ -105,7 +108,13 @@ const FilteredCallLogs = () => {
   const renderItem = ({item}: {item: ICallLog}) => {
     return (
       <TouchableOpacity
-        style={styles.callLogContainer}
+        style={[
+          styles.callLogContainer,
+          {
+            backgroundColor: darkMode ? '#2C2C2C' : Colors.white,
+            shadowColor: darkMode ? 'rgba(255, 255, 255, 0.2)' : Colors.black,
+          },
+        ]}
         onPress={() =>
           navigate('PersonCallLogs', {
             item: {
@@ -141,13 +150,13 @@ const FilteredCallLogs = () => {
           )}
 
           <View style={styles.callLogText}>
-            <Text style={styles.phoneText}>
+            <Text style={[styles.phoneText, {color: darkMode ? Colors.white : Colors.black}]}>
               {item.name || item.phoneNumber}
             </Text>
-            <Text style={styles.dateText}>{formatDate(item.timestamp)}</Text>
+            <Text style={[styles.dateText,{color: darkMode ? Colors.white : Colors.black}]}>{formatDate(item.timestamp)}</Text>
           </View>
         </View>
-        <Text style={styles.durationText}>
+        <Text style={[styles.durationText, {color: darkMode ? Colors.white : Colors.black}]}>
           {item.duration ? formatTime(item.duration) : null}
         </Text>
       </TouchableOpacity>
@@ -176,7 +185,12 @@ const FilteredCallLogs = () => {
   }
 
   return (
-    <View style={[styles.container,{paddingTop: Platform.OS === 'ios' ? 0 : insets.top}]}>
+    <View
+      style={[
+        styles.container,
+        {paddingTop: Platform.OS === 'ios' ? 0 : insets.top},
+        {backgroundColor: darkMode ? Colors.black : '#f5f5f5'},
+      ]}>
       <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />
       <View style={styles.header}>
         <Pressable onPress={goBack} style={styles.backButton}>
@@ -184,11 +198,16 @@ const FilteredCallLogs = () => {
             name="arrow-back-sharp"
             iconFamily="Ionicons"
             size={RFValue(24)}
-            color={Colors.black}
+            color={darkMode ? Colors.white : Colors.black}
           />
         </Pressable>
-        {/* <Text style={styles.titleText}>{getTitle()} ({filteredLogs.length})</Text> */}
-        <Text style={styles.titleText}>{getTitle()}</Text>
+        <Text
+          style={[
+            styles.titleText,
+            {color: darkMode ? Colors.white : Colors.black},
+          ]}>
+          {getTitle()}
+        </Text>
       </View>
 
       <FlatList

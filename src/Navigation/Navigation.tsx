@@ -7,8 +7,8 @@ import { navigationRef } from '../utility/NavigationUtils';
 import SplashScreen from '../screens/app/SplashScreen';
 import PersonCallLogs from '../components/PersonCallLogs';
 import FilteredCallLogs from '../components/FilteredCallLogs';
-import LoginScreen from '../screens/app/LoginScreen/LoginScreen';
 import ForgotPasswordScreen from '../screens/app/Forgotpassword/ForgotPasswordScreen';
+import LoginScreen from '../screens/app/LoginScreen';
 
 
 

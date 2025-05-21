@@ -13,6 +13,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../../state/store';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { resetAndNavigate } from '../../../utility/NavigationUtils';
 
 type RootStackParamList = {
   Login: undefined;
@@ -20,16 +21,13 @@ type RootStackParamList = {
 
 type Props = NativeStackScreenProps<RootStackParamList, 'Login'>;
 
-const SettingScreen: React.FC<Props> = ({ navigation }) => {
+const SettingScreen = () => {
   const darkMode = useSelector((state: RootState) => state.theme.darkMode);
   const dispatch = useDispatch<AppDispatch>();
   const insets = useSafeAreaInsets();
 
   const handleLogout = () => {
-    navigation.reset({
-      index: 0,
-      routes: [{ name: 'Login' }],
-    });
+    resetAndNavigate('Login'); 
   };
 
   return (
@@ -37,14 +35,14 @@ const SettingScreen: React.FC<Props> = ({ navigation }) => {
       style={[
         styles.container,
         { backgroundColor: darkMode ? '#121212' : '#f0f0f0' },
-        {paddingTop: Platform.OS === 'ios' ? 0 : insets.top}
+        { paddingTop: Platform.OS === 'ios' ? 0 : insets.top }
       ]}
     >
       <Text style={[styles.heading, { color: darkMode ? '#fff' : '#000' }]}>
         Settings
       </Text>
 
-      <View style={[styles.card, { backgroundColor: darkMode ? '#1f1f1f' : '#fff' }]}>
+      <View style={[styles.card, { backgroundColor: darkMode ? '#2C2C2C' : '#fff' }]}>
         <View style={styles.row}>
           <Icon name="theme-light-dark" size={24} color={darkMode ? '#fff' : '#333'} />
           <Text style={[styles.text, { color: darkMode ? '#fff' : '#000' }]}>

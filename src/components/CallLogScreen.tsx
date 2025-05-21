@@ -24,7 +24,7 @@ import {Colors} from '../utility/constants';
 import {useCallLogs} from '../hooks/useCallLogs';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {screenHeight} from '../utility/Scaling';
-import { useFocusEffect } from '@react-navigation/native';
+import {useFocusEffect} from '@react-navigation/native';
 
 const CallLogScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
@@ -36,6 +36,7 @@ const CallLogScreen: React.FC = () => {
   const [showScrollTop, setShowScrollTop] = useState(false);
   const flatListRef = useRef<FlatList>(null);
   const [initialLoadComplete, setInitialLoadComplete] = useState(false);
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -43,14 +44,14 @@ const CallLogScreen: React.FC = () => {
         BackHandler.exitApp();
         return true;
       };
-  
+
       const backHandler = BackHandler.addEventListener(
         'hardwareBackPress',
-        onBackPress
+        onBackPress,
       );
-  
-      return () => backHandler.remove(); 
-    }, [])
+
+      return () => backHandler.remove();
+    }, []),
   );
 
   useEffect(() => {
@@ -106,7 +107,7 @@ const CallLogScreen: React.FC = () => {
           )}
         </View>
         <View>
-          <Text style={{fontSize: RFValue(18)}}>
+          <Text style={{fontSize: RFValue(18),color:darkMode?Colors.white:Colors.black}}>
             {item.name || item.phoneNumber}
           </Text>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
@@ -134,7 +135,7 @@ const CallLogScreen: React.FC = () => {
                 size={RFValue(14)}
               />
             )}
-            <Text>{formatDate(item.timestamp)}</Text>
+            <Text style={{color:darkMode?Colors.white:Colors.black}}>{formatDate(item.timestamp)}</Text>
           </View>
         </View>
       </View>
@@ -167,6 +168,7 @@ const CallLogScreen: React.FC = () => {
       style={[
         styles.container,
         {paddingTop: Platform.OS === 'ios' ? 0 : insets.top},
+        {backgroundColor: darkMode ? Colors.black : '#f5f5f5'},
       ]}>
       <SafeAreaView />
       <Search
@@ -230,32 +232,33 @@ const CallLogScreen: React.FC = () => {
         </View>
       )}
       {!initialLoadComplete && callLogs.length === 0 ? (
-  <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" />
-    <Text style={styles.loadingText}>Loading call history...</Text>
-  </View>
-) : (
-      <FlatList
-        data={callLogs}
-        renderItem={renderItem}
-        keyExtractor={getKey}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.5}
-        onRefresh={refresh}
-        refreshing={isRefreshing}
-        ListFooterComponent={
-          <>
-            {hasMore ? <ActivityIndicator size="small" /> : null}
-            <Text style={{textAlign: 'center', padding: 10}}>
-              Showing {callLogs.length} of {totalCount} logs
-            </Text>
-          </>
-        }
-        showsVerticalScrollIndicator={false}
-        ref={flatListRef}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-      />)}
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" />
+          <Text style={styles.loadingText}>Loading call history...</Text>
+        </View>
+      ) : (
+        <FlatList
+          data={callLogs}
+          renderItem={renderItem}
+          keyExtractor={getKey}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.5}
+          onRefresh={refresh}
+          refreshing={isRefreshing}
+          ListFooterComponent={
+            <>
+              {hasMore ? <ActivityIndicator size="small" /> : null}
+              <Text style={{textAlign: 'center', padding: 10}}>
+                Showing {callLogs.length} of {totalCount} logs
+              </Text>
+            </>
+          }
+          showsVerticalScrollIndicator={false}
+          ref={flatListRef}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+        />
+      )}
       {showScrollTop && (
         <TouchableOpacity
           style={styles.scrollTopButton}

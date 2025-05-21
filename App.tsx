@@ -43,7 +43,7 @@ const App = () => {
       const newestTimestamp = await CallLogDatabase.getNewestTimestamp();
       console.log('Newest existing timestamp:', newestTimestamp ? new Date(newestTimestamp) : 'None');
 
-      const batchSize = 500; 
+      const batchSize = 1000; 
       let offset = 0;
       let totalProcessed = 0;
       let hasMore = true;

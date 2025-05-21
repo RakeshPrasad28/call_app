@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Platform,
+  StatusBar,
 } from 'react-native';
 import React, {useCallback, useEffect, useState} from 'react';
 import {useRoute} from '@react-navigation/native';
@@ -176,6 +177,7 @@ const FilteredCallLogs = () => {
 
   return (
     <View style={[styles.container,{paddingTop: Platform.OS === 'ios' ? 0 : insets.top}]}>
+      <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />
       <View style={styles.header}>
         <Pressable onPress={goBack} style={styles.backButton}>
           <Icon

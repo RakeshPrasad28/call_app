@@ -13,9 +13,12 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
 import { goBack } from '../../../utility/NavigationUtils';
 import { Colors } from '../../../utility/constants';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../../state/store';
 
 const ForgotPasswordScreen = () => {
   const [phone, setPhone] = useState('');
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
 
   const handleSendOtp = () => {
     if (!phone || phone.length < 10) {
@@ -27,7 +30,11 @@ const ForgotPasswordScreen = () => {
 
   return (
     <LinearGradient
-      colors={['#1c1c1c', '#2a2a72']}
+      colors={
+        darkMode
+          ? ['#0f2027', '#203a43', '#2c5364'] // Dark mode gradient
+          : ['#00c6ff', '#0072ff', '#00c6ff'] // Cool light mode gradient with blue and teal
+      }
       style={styles.container}
     >
       <StatusBar barStyle="light-content" />

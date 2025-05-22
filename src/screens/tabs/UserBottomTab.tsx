@@ -2,8 +2,8 @@ import React, {FC} from 'react';
 import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
 import CustomTabBar from './CustomTabBar';
 import Logs from '../app/Logs';
-import Home from '../app/Home';
 import SettingScreen from '../app/settings/SettingScreen';
+import Home from '../app/home';
 
 const Tab = createBottomTabNavigator();
 const UserBottomTab: FC = () => {

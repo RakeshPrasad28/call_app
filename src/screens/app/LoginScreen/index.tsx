@@ -7,12 +7,15 @@ import {
   StyleSheet,
   StatusBar,
   SafeAreaView,
-  Alert,
+  Switch,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
+import {useSelector, useDispatch} from 'react-redux';
 import {navigate} from '../../../utility/NavigationUtils';
 import {Colors} from '../../../utility/constants';
+import {toggleTheme} from '../../../state/slice/themeSlice';
+import {RootState} from '../../../state/store';
 
 const LoginScreen = () => {
   const [phone, setPhone] = useState('');
@@ -28,41 +31,81 @@ const LoginScreen = () => {
     navigate('UserBottomTab');
   };
 
+  // Get dark mode state and dispatch function
+  const darkMode = useSelector((state: RootState) => state.theme.darkMode);
+  const dispatch = useDispatch();
+
   return (
     <LinearGradient
-      colors={['#0f2027', '#203a43', '#2c5364']}
-      style={styles.container}>
+      // For dark mode and light mode gradients
+      colors={
+        darkMode
+          ? ['#0f2027', '#203a43', '#2c5364'] // Dark mode gradient
+          : ['#00c6ff', '#0072ff', '#00c6ff'] // Cool light mode gradient with blue and teal
+      }
+      style={[
+        styles.container,
+        {backgroundColor: darkMode ? '#0f2027' : '#ffffff'},
+      ]}>
       <StatusBar
-        barStyle="light-content"
+        barStyle={darkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
         translucent={true}
       />
       <SafeAreaView style={styles.innerContainer}>
-        <Text style={styles.logo}>Welcome</Text>
+        <View style={styles.header}>
+          <View style={{width:90}}></View>
+          <Text
+            style={[styles.logo, {color: darkMode ? Colors.white : '#333'}]}>
+            Welcome
+          </Text>
+          <Switch
+            style={styles.switch}
+            value={darkMode}
+            onValueChange={() => {
+              dispatch(toggleTheme());
+            }}
+            thumbColor={darkMode ? '#00c6ff' : '#f4f3f4'}
+            trackColor={{false: '#767577', true: '#81b0ff'}}
+          />
+        </View>
 
-        <View style={styles.inputContainer}>
-          <Icon name="phone" size={22} color="#aaa" style={styles.icon} />
+        <View
+          style={[
+            styles.inputContainer,
+            {backgroundColor: darkMode ? '#ffffff20' : '#f5f5f5'},
+          ]}>
+          <Icon
+            name="phone"
+            size={22}
+            color={darkMode ? '#aaa' : '#333'}
+            style={styles.icon}
+          />
           <TextInput
-            style={styles.input}
+            style={[styles.input, {color: darkMode ? Colors.white : '#333'}]}
             placeholder="Phone Number"
-            placeholderTextColor="#aaa"
+            placeholderTextColor={darkMode ? '#aaa' : '#777'}
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
           />
         </View>
 
-        <View style={styles.inputContainer}>
+        <View
+          style={[
+            styles.inputContainer,
+            {backgroundColor: darkMode ? '#ffffff20' : '#f5f5f5'},
+          ]}>
           <Icon
             name="lock-outline"
             size={22}
-            color="#aaa"
+            color={darkMode ? '#aaa' : '#333'}
             style={styles.icon}
           />
           <TextInput
-            style={styles.input}
+            style={[styles.input, {color: darkMode ? Colors.white : '#333'}]}
             placeholder="Password"
-            placeholderTextColor="#aaa"
+            placeholderTextColor={darkMode ? '#aaa' : '#777'}
             secureTextEntry={secureText}
             value={password}
             onChangeText={setPassword}
@@ -71,7 +114,7 @@ const LoginScreen = () => {
             <Icon
               name={secureText ? 'eye-outline' : 'eye-off-outline'}
               size={22}
-              color="#aaa"
+              color={darkMode ? '#aaa' : '#333'}
             />
           </TouchableOpacity>
         </View>
@@ -79,10 +122,18 @@ const LoginScreen = () => {
         <TouchableOpacity
           style={styles.forgotContainer}
           onPress={() => navigate('ForgotPassword')}>
-          <Text style={styles.forgotText}>Forgot Password?</Text>
+          <Text
+            style={[styles.forgotText, {color: darkMode ? '#ccc' : '#555'}]}>
+            Forgot Password?
+          </Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+        <TouchableOpacity
+          style={[
+            styles.loginButton,
+            {backgroundColor: darkMode ? '#00c6ff' : '#0077b5'},
+          ]}
+          onPress={handleLogin}>
           <Text style={styles.loginText}>Login</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -99,17 +150,23 @@ const styles = StyleSheet.create({
     padding: 24,
     justifyContent: 'center',
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 40,
+  },
   logo: {
     fontSize: 32,
-    color: Colors.white,
     fontWeight: 'bold',
-    marginBottom: 40,
     alignSelf: 'center',
+  },
+  switch: {
+    marginLeft: 'auto', // To align it to the right
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff20',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 14,
@@ -120,7 +177,6 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: Colors.white,
     fontSize: 16,
   },
   forgotContainer: {
@@ -128,12 +184,10 @@ const styles = StyleSheet.create({
     marginBottom: 30,
   },
   forgotText: {
-    color: '#ccc',
     fontSize: 14,
     textDecorationLine: 'underline',
   },
   loginButton: {
-    backgroundColor: '#00c6ff',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',

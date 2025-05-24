@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import LinearGradient from 'react-native-linear-gradient';
-import { goBack } from '../../../utility/NavigationUtils';
-import { Colors } from '../../../utility/constants';
-import { useSelector } from 'react-redux';
-import { RootState } from '../../../state/store';
+import {goBack} from '../../../utility/NavigationUtils';
+import {Colors} from '../../../utility/constants';
+import {useSelector} from 'react-redux';
+import {RootState} from '../../../state/store';
 
 const ForgotPasswordScreen = () => {
   const [phone, setPhone] = useState('');
@@ -32,39 +32,70 @@ const ForgotPasswordScreen = () => {
     <LinearGradient
       colors={
         darkMode
-          ? ['#0f2027', '#203a43', '#2c5364'] // Dark mode gradient
-          : ['#00c6ff', '#0072ff', '#00c6ff'] // Cool light mode gradient with blue and teal
+          ? [Colors.BlackFeather, Colors.RoyalNeptune, Colors.Glitch]
+          : [Colors.coral, Colors.white]
       }
-      style={styles.container}
-    >
+      style={styles.container}>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.innerContainer}>
-        <Text style={styles.title}>Forgot Password</Text>
-        <Text style={styles.subtitle}>
+        <Text
+          style={[
+            styles.title,
+            {color: darkMode ? Colors.white : Colors.carbon},
+          ]}>
+          Forgot Password
+        </Text>
+        <Text
+          style={[
+            styles.subtitle,
+            {color: darkMode ? Colors.cerebralGrey : Colors.stoneCold},
+          ]}>
           Enter your phone number to receive an OTP
         </Text>
 
-        <View style={styles.inputContainer}>
-          <Icon name="phone" size={22} color="#aaa" style={styles.icon} />
+        <View
+          style={[
+            styles.inputContainer,
+            {
+              backgroundColor: darkMode ? Colors.carbon : Colors.white,
+              shadowColor: darkMode ? Colors.white : Colors.black,
+            },
+          ]}>
+          <Icon
+            name="phone"
+            size={22}
+            color={darkMode ? Colors.DhūsarGrey : Colors.coral}
+            style={styles.icon}
+          />
           <TextInput
             style={styles.input}
             placeholder="Phone Number"
-            placeholderTextColor="#aaa"
+            placeholderTextColor={
+              darkMode ? Colors.DhūsarGrey : Colors.LuckyGrey
+            }
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
           />
         </View>
 
-        <TouchableOpacity style={styles.otpButton} onPress={handleSendOtp}>
+        <TouchableOpacity
+          style={[
+            styles.otpButton,
+            {backgroundColor: darkMode ? Colors.vividSkyBlue : Colors.coral},
+          ]}
+          onPress={handleSendOtp}>
           <Text style={styles.otpText}>Send OTP</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
-          style={styles.backToLogin}
-          onPress={() =>goBack()}
-        >
-          <Text style={styles.backText}>Back to Login</Text>
+        <TouchableOpacity style={styles.backToLogin} onPress={() => goBack()}>
+          <Text
+            style={[
+              styles.backText,
+              {color: darkMode ? Colors.cerebralGrey : Colors.stoneCold},
+            ]}>
+            Back to Login
+          </Text>
         </TouchableOpacity>
       </SafeAreaView>
     </LinearGradient>
@@ -89,18 +120,20 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: 14,
-    color: '#aaa',
     textAlign: 'center',
     marginBottom: 32,
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#ffffff20',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 14,
     marginBottom: 20,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   icon: {
     marginRight: 10,
@@ -111,7 +144,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   otpButton: {
-    backgroundColor: '#00c6ff',
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
@@ -127,7 +159,6 @@ const styles = StyleSheet.create({
     marginTop: 30,
   },
   backText: {
-    color: '#ccc',
     fontSize: 14,
     textDecorationLine: 'underline',
   },

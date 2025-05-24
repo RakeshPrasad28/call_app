@@ -10,12 +10,12 @@ import {
   Switch,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import LinearGradient from 'react-native-linear-gradient';
 import {useSelector, useDispatch} from 'react-redux';
 import {navigate} from '../../../utility/NavigationUtils';
 import {Colors} from '../../../utility/constants';
 import {toggleTheme} from '../../../state/slice/themeSlice';
 import {RootState} from '../../../state/store';
+import LinearGradient from 'react-native-linear-gradient'; 
 
 const LoginScreen = () => {
   const [phone, setPhone] = useState('');
@@ -31,22 +31,17 @@ const LoginScreen = () => {
     navigate('UserBottomTab');
   };
 
-  // Get dark mode state and dispatch function
   const darkMode = useSelector((state: RootState) => state.theme.darkMode);
   const dispatch = useDispatch();
 
   return (
     <LinearGradient
-      // For dark mode and light mode gradients
       colors={
         darkMode
-          ? ['#0f2027', '#203a43', '#2c5364'] // Dark mode gradient
-          : ['#00c6ff', '#0072ff', '#00c6ff'] // Cool light mode gradient with blue and teal
+          ? [Colors.BlackFeather, Colors.RoyalNeptune, Colors.Glitch] 
+          : [Colors.coral, Colors.white] 
       }
-      style={[
-        styles.container,
-        {backgroundColor: darkMode ? '#0f2027' : '#ffffff'},
-      ]}>
+      style={styles.container}>
       <StatusBar
         barStyle={darkMode ? 'light-content' : 'dark-content'}
         backgroundColor="transparent"
@@ -54,9 +49,9 @@ const LoginScreen = () => {
       />
       <SafeAreaView style={styles.innerContainer}>
         <View style={styles.header}>
-          <View style={{width:90}}></View>
+          <View style={{width: 90}}></View>
           <Text
-            style={[styles.logo, {color: darkMode ? Colors.white : '#333'}]}>
+            style={[styles.logo, {color: darkMode ? Colors.white : Colors.carbon}]}>
             Welcome
           </Text>
           <Switch
@@ -65,26 +60,29 @@ const LoginScreen = () => {
             onValueChange={() => {
               dispatch(toggleTheme());
             }}
-            thumbColor={darkMode ? '#00c6ff' : '#f4f3f4'}
-            trackColor={{false: '#767577', true: '#81b0ff'}}
+            thumbColor={darkMode ? Colors.vividSkyBlue : Colors.LiquidNitrogen}
+            trackColor={{false: Colors.LuckyGrey, true: Colors.ParakeetBlue}}
           />
         </View>
 
         <View
           style={[
             styles.inputContainer,
-            {backgroundColor: darkMode ? '#ffffff20' : '#f5f5f5'},
+            {
+              backgroundColor: darkMode ? Colors.carbon : Colors.white,
+              shadowColor: darkMode ? Colors.white : Colors.black,
+            },
           ]}>
           <Icon
             name="phone"
             size={22}
-            color={darkMode ? '#aaa' : '#333'}
+            color={darkMode ? Colors.DhūsarGrey : Colors.coral} 
             style={styles.icon}
           />
           <TextInput
-            style={[styles.input, {color: darkMode ? Colors.white : '#333'}]}
+            style={[styles.input, {color: darkMode ? Colors.white : Colors.carbon}]}
             placeholder="Phone Number"
-            placeholderTextColor={darkMode ? '#aaa' : '#777'}
+            placeholderTextColor={darkMode ? Colors.DhūsarGrey : Colors.LuckyGrey}
             keyboardType="phone-pad"
             value={phone}
             onChangeText={setPhone}
@@ -94,18 +92,21 @@ const LoginScreen = () => {
         <View
           style={[
             styles.inputContainer,
-            {backgroundColor: darkMode ? '#ffffff20' : '#f5f5f5'},
+            {
+              backgroundColor: darkMode ? Colors.carbon : Colors.white,
+              shadowColor: darkMode ? Colors.white : Colors.black,
+            },
           ]}>
           <Icon
             name="lock-outline"
             size={22}
-            color={darkMode ? '#aaa' : '#333'}
+            color={darkMode ? Colors.DhūsarGrey :Colors.coral} 
             style={styles.icon}
           />
           <TextInput
-            style={[styles.input, {color: darkMode ? Colors.white : '#333'}]}
+            style={[styles.input, {color: darkMode ? Colors.white : Colors.carbon}]}
             placeholder="Password"
-            placeholderTextColor={darkMode ? '#aaa' : '#777'}
+            placeholderTextColor={darkMode ? Colors.DhūsarGrey : Colors.LuckyGrey}
             secureTextEntry={secureText}
             value={password}
             onChangeText={setPassword}
@@ -114,7 +115,7 @@ const LoginScreen = () => {
             <Icon
               name={secureText ? 'eye-outline' : 'eye-off-outline'}
               size={22}
-              color={darkMode ? '#aaa' : '#333'}
+              color={darkMode ? Colors.DhūsarGrey : Colors.coral}
             />
           </TouchableOpacity>
         </View>
@@ -123,7 +124,7 @@ const LoginScreen = () => {
           style={styles.forgotContainer}
           onPress={() => navigate('ForgotPassword')}>
           <Text
-            style={[styles.forgotText, {color: darkMode ? '#ccc' : '#555'}]}>
+            style={[styles.forgotText, {color: darkMode ? Colors.cerebralGrey : Colors.stoneCold}]}>
             Forgot Password?
           </Text>
         </TouchableOpacity>
@@ -131,7 +132,7 @@ const LoginScreen = () => {
         <TouchableOpacity
           style={[
             styles.loginButton,
-            {backgroundColor: darkMode ? '#00c6ff' : '#0077b5'},
+            {backgroundColor: darkMode ? Colors.vividSkyBlue : Colors.coral},
           ]}
           onPress={handleLogin}>
           <Text style={styles.loginText}>Login</Text>
@@ -162,7 +163,7 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   switch: {
-    marginLeft: 'auto', // To align it to the right
+    marginLeft: 'auto',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -171,6 +172,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 14,
     marginBottom: 20,
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 5,
+    elevation: 3,
   },
   icon: {
     marginRight: 10,

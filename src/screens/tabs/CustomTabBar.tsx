@@ -27,7 +27,7 @@ const CustomTabBar: FC<BottomTabBarProps> = props => {
         styles.tabBarContainer,
         animatedStyle,
         {paddingBottom: bottom.bottom},
-        {backgroundColor: darkMode ? Colors.cerebralGrey : Colors.primary},
+        {backgroundColor: darkMode ? Colors.cerebralGrey : Colors.white},
       ]}>
       {state.routes?.map((route, index) => {
         const isFocused = state.index === index;
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   },
   focusedTabItem: {
     borderBottomWidth: 2,
-    borderBottomColor: Colors.primary,
+    borderBottomColor: Colors.white,
   },
   tabItem: {
     justifyContent: 'center',
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
     width: '30.13%',
   },
   tabBarContainer: {
-    backgroundColor: Colors.primary,
+    backgroundColor: Colors.white,
     width: '100%',
     position: 'absolute',
     height: BOTTOM_TAB_HEIGHT,

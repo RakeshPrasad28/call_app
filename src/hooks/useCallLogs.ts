@@ -16,57 +16,6 @@ export const useCallLogs = (
   const dispatch = useDispatch();
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
-const getFilteredLogsPaginated = useCallback(async (
-  filterType: 'ALL' | 'INCOMING' | 'OUTGOING' | 'MISSED',
-  offset: number,
-  limit: number = BATCH_SIZE
-) => {
-  try {
-    const realm = await CallLogDatabase.initialize();
-    let query = realm.objects<ICallLog>('CallLog').sorted('timestamp', true);
-
-    if (filterType !== 'ALL') {
-      query = query.filtered('type == $0', filterType);
-    }
-
-    const totalCount = query.length;
-    const logs = Array.from(query.slice(offset, offset + limit));
-    
-    return {
-      logs,
-      totalCount,
-      hasMore: offset + logs.length < totalCount,
-      newOffset: offset + logs.length
-    };
-  } catch (error) {
-    console.error('Error getting filtered logs:', error);
-    return {
-      logs: [],
-      totalCount: 0,
-      hasMore: false,
-      newOffset: offset
-    };
-  }
-}, []);
-
-const getFilteredLogsCount = useCallback(async (
-  filterType: 'ALL' | 'INCOMING' | 'OUTGOING' | 'MISSED'
-) => {
-  try {
-    const realm = await CallLogDatabase.initialize();
-    let query = realm.objects<ICallLog>('CallLog');
-
-    if (filterType !== 'ALL') {
-      query = query.filtered('type == $0', filterType);
-    }
-
-    return query.length;
-  } catch (error) {
-    console.error('Error getting filtered count:', error);
-    return 0;
-  }
-}, []);
-
 const loadInitialData = useCallback(async () => {
   dispatch(setLoading(true));
   try {

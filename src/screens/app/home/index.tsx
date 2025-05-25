@@ -102,7 +102,7 @@ const Home = () => {
       INCOMING: dailyStats[day].INCOMING,
       OUTGOING: dailyStats[day].OUTGOING,
       MISSED: dailyStats[day].MISSED,
-      label: moment(day).format('MMM D'),
+      label: moment(day).format('D/M'),
     }));
 
     const weeklyDataArray = Object.keys(weeklyStats).map(week => ({

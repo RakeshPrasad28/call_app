@@ -16,6 +16,7 @@ import {RootState} from '../../../state/store';
 import CallLogDatabase from '../../../database/CallLogDatabase';
 import {Colors} from '../../../utility/constants';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { fontR } from '../../../utility/Scaling';
 
 type ChartFilter = 'day' | 'week';
 type ChartType = 'duration' | 'count';
@@ -344,6 +345,17 @@ const Home = () => {
             }}
             hideRules
             style={styles.chart}
+            barInnerComponent={(item: any) => (
+              <Text
+                style={{
+                  color: darkMode ? Colors.white : Colors.black,
+                  fontSize: fontR(10),
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}>
+                {item.value}
+              </Text>
+            )}
           />
 
           <View style={styles.chartHeader}>

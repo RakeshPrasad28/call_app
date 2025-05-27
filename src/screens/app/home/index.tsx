@@ -13,9 +13,10 @@ import {LineChart, BarChart, PieChart} from 'react-native-gifted-charts';
 import moment from 'moment';
 import {useSelector} from 'react-redux';
 import {RootState} from '../../../state/store';
-import CallLogDatabase from '../../../database/CallLogDatabase';
+import {getCallLogs} from '../../../database/RealmService';
 import {Colors} from '../../../utility/constants';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
+import { fontR } from '../../../utility/Scaling';
 
 type ChartFilter = 'day' | 'week';
 type ChartType = 'duration' | 'count';
@@ -31,6 +32,8 @@ const Home = () => {
   const [outgoingCalls, setOutgoingCalls] = useState(0);
   const [missedCalls, setMissedCalls] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [durationLoading, setDurationLoading] = useState(false);
+  const [countLoading, setCountLoading] = useState(false);
   const insets = useSafeAreaInsets();
 
   const [durationFilter, setDurationFilter] = useState<ChartFilter>('day');
@@ -44,11 +47,8 @@ const Home = () => {
   const calculateAnalytics = async () => {
     setLoading(true);
 
-    const allLogs = await CallLogDatabase.getCallLogsBatch(
-      0,
-      1000,
-      selectedFilter,
-    );
+    const realmLogs = getCallLogs();
+    const allLogs = Array.from(realmLogs);
 
     const dailyStats: any = {};
     const weeklyStats: any = {};
@@ -56,7 +56,7 @@ const Home = () => {
     let outgoingCallsCount = 0;
     let missedCallsCount = 0;
 
-    allLogs.logs.forEach((log: any) => {
+    allLogs.forEach((log: any) => {
       const date = moment(log.timestamp);
       const day = date.format('YYYY-MM-DD');
       const week = date.format('YYYY-ww');
@@ -120,7 +120,6 @@ const Home = () => {
     setOutgoingCalls(outgoingCallsCount);
     setMissedCalls(missedCallsCount);
 
-    // percentage calculation
     const totalCalls =
       incomingCallsCount + outgoingCallsCount + missedCallsCount;
 
@@ -186,9 +185,19 @@ const Home = () => {
     });
   };
 
-  const setFilter = (type: ChartType, filter: ChartFilter) => {
-    if (type === 'duration') setDurationFilter(filter);
-    if (type === 'count') setCountFilter(filter);
+  const setFilter = async (type: ChartType, filter: ChartFilter) => {
+    if (type === 'duration') {
+      setDurationLoading(true);
+      setDurationFilter(filter);
+      setTimeout(() => setDurationLoading(false), 300);
+    }
+
+    if (type === 'count') {
+      setCountLoading(true);
+      setCountFilter(filter);
+      setTimeout(() => setCountLoading(false), 300);
+    }
+
     setShowFilterMenu({type: null, visible: false});
   };
 
@@ -301,22 +310,32 @@ const Home = () => {
             </Text>
             {renderFilterButton('duration', durationFilter)}
           </View>
-          <LineChart
-            data={getDurationChartData()}
-            height={250}
-            showValuesOnTopOfBars
-            spacing={40}
-            color="#1DA1F2"
-            textColor={darkMode ? Colors.white : Colors.black}
-            thickness={2}
-            noOfSections={5}
-            yAxisTextStyle={{color: darkMode ? Colors.white : Colors.black}}
-            xAxisLabelTextStyle={{
-              color: darkMode ? Colors.white : Colors.black,
-            }}
-            hideRules
-            style={styles.chart}
-          />
+          {durationLoading ? (
+            <View style={{justifyContent:"center", alignItems:"center"}}>
+              <ActivityIndicator
+                size="large"
+                color="#1DA1F2"
+                style={{marginTop: 100}}
+              />
+            </View>
+          ) : (
+            <LineChart
+              data={getDurationChartData()}
+              height={250}
+              showValuesOnTopOfBars
+              spacing={40}
+              color="#1DA1F2"
+              textColor={darkMode ? Colors.white : Colors.black}
+              thickness={2}
+              noOfSections={5}
+              yAxisTextStyle={{color: darkMode ? Colors.white : Colors.black}}
+              xAxisLabelTextStyle={{
+                color: darkMode ? Colors.white : Colors.black,
+              }}
+              hideRules
+              style={styles.chart}
+            />
+          )}
 
           <View style={styles.chartHeader}>
             <Text
@@ -332,19 +351,40 @@ const Home = () => {
               {renderCallTypeFilterButton()}
             </View>
           </View>
-          <BarChart
-            data={getCountChartData()}
-            height={250}
-            spacing={40}
-            barWidth={30}
-            frontColor="#FF6384"
-            yAxisTextStyle={{color: darkMode ? Colors.white : Colors.black}}
-            xAxisLabelTextStyle={{
-              color: darkMode ? Colors.white : Colors.black,
-            }}
-            hideRules
-            style={styles.chart}
-          />
+          {countLoading ? (
+            <View style={{justifyContent:"center", alignItems:"center"}}>
+              <ActivityIndicator
+                size="large"
+                color="#FF6384"
+                style={{marginTop: 100}}
+              />
+            </View>
+          ) : (
+            <BarChart
+              data={getCountChartData()}
+              height={250}
+              spacing={40}
+              barWidth={30}
+              frontColor="#FF6384"
+              yAxisTextStyle={{color: darkMode ? Colors.white : Colors.black}}
+              xAxisLabelTextStyle={{
+                color: darkMode ? Colors.white : Colors.black,
+              }}
+              hideRules
+              style={styles.chart}
+              barInnerComponent={(item: any) => (
+              <Text
+                style={{
+                  color: darkMode ? Colors.white : Colors.black,
+                  fontSize: fontR(10),
+                  fontWeight: 'bold',
+                  textAlign: 'center',
+                }}>
+                {item.value}
+              </Text>
+            )}
+            />
+          )}
 
           <View style={styles.chartHeader}>
             <Text

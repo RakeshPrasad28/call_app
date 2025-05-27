@@ -17,7 +17,7 @@ import Icon from './common/Icon';
 import {goBack, navigate} from '../utility/NavigationUtils';
 import {Avatar} from '@rneui/themed';
 import {Colors} from '../utility/constants';
-import CallLogDatabase from '../database/CallLogDatabase';
+import {getFilteredCallLogs} from '../database/RealmService';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {RootState} from '../state/store';
 import {useSelector} from 'react-redux';
@@ -42,32 +42,12 @@ const FilteredCallLogs = () => {
   const [isLoading, setIsLoading] = useState(true);
   const darkMode = useSelector((state: RootState) => state.theme.darkMode);
 
-  const loadFilteredCallLogs = useCallback(async () => {
-    setIsLoading(true);
-    try {
-      const realm = await CallLogDatabase.initialize();
-      let results;
-
-      if (type === 'ALL') {
-        results = realm.objects<ICallLog>('CallLog').sorted('timestamp', true);
-      } else {
-        results = realm
-          .objects<ICallLog>('CallLog')
-          .filtered('type == $0', type)
-          .sorted('timestamp', true);
-      }
-
-      setFilteredLogs(Array.from(results));
-    } catch (error) {
-      console.error('Error loading filtered logs:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [type]);
-
   useEffect(() => {
-    loadFilteredCallLogs();
-  }, [loadFilteredCallLogs]);
+  setIsLoading(true);
+  const logs = getFilteredCallLogs(type);
+  setFilteredLogs(logs);
+  setIsLoading(false);
+}, [type]);
 
   const formatDate = (timestamp: number) => {
     const date = moment(timestamp);

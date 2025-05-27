@@ -1,9 +1,12 @@
-import React from 'react';
+import React, {useEffect, useState} from 'react';
 import {StatusBar, Text, View} from 'react-native';
 import CallLogScreen from '../../../components/CallLogScreen';
-import { Colors } from '../../../utility/constants';
+import {Colors} from '../../../utility/constants';
+import {getCallLogs} from '../../../database/RealmService';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Logs = () => {
+  
   return (
     <View style={{flex: 1}}>
       <StatusBar backgroundColor={Colors.white} barStyle="dark-content" />

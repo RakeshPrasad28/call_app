@@ -9,8 +9,8 @@ import {
 import React, {FC, useState, useRef} from 'react';
 import {RFValue} from 'react-native-responsive-fontsize';
 import Icon from './common/Icon';
-import CallLogDatabase from '../database/CallLogDatabase';
 import { Colors } from '../utility/constants';
+import {searchCallLogs} from '../database/RealmService';
 
 type SearchProps = {
   onToggleMenu: () => void;
@@ -24,39 +24,27 @@ const Search: FC<SearchProps> = ({onToggleMenu, onSelectItem}) => {
   const searchTimeoutRef = useRef<NodeJS.Timeout>();
 
   const handleSearch = (text: string) => {
-    setSearchText(text);
-    
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
+  setSearchText(text);
 
-    searchTimeoutRef.current = setTimeout(async () => {
-      if (text.length > 0) {
-        try {
-          const realm = await CallLogDatabase.initialize();
-          const results = realm.objects('CallLog')
-            .filtered('phoneNumber CONTAINS[c] $0 OR name CONTAINS[c] $0', text)
-            .slice(0, 5); // Limit to 5 suggestions
-          
-          const uniqueResults = Array.from(results).reduce((acc: any[], current: any) => {
-            const exists = acc.some(item => item.phoneNumber === current.phoneNumber);
-            if (!exists) {
-              acc.push(current);
-            }
-            return acc;
-          }, []);
+  if (searchTimeoutRef.current) {
+    clearTimeout(searchTimeoutRef.current);
+  }
 
-          setSuggestions(uniqueResults);
-          setShowSuggestions(true);
-        } catch (error) {
-          console.error('Search error:', error);
-        }
-      } else {
-        setShowSuggestions(false);
-        setSuggestions([]);
+  searchTimeoutRef.current = setTimeout(async () => {
+    if (text.length > 0) {
+      try {
+        const results = await searchCallLogs(text);
+        setSuggestions(results);
+        setShowSuggestions(true);
+      } catch (error) {
+        console.error('Search error:', error);
       }
-    }, 300); 
-  };
+    } else {
+      setShowSuggestions(false);
+      setSuggestions([]);
+    }
+  }, 300);
+};
 
   const handleSelect = (item: any) => {
     setSearchText('');

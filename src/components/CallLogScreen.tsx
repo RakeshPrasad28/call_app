@@ -21,22 +21,64 @@ import Icon from './common/Icon';
 import {Avatar} from '@rneui/themed';
 import Search from './Search';
 import {Colors} from '../utility/constants';
-import {useCallLogs} from '../hooks/useCallLogs';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {screenHeight} from '../utility/Scaling';
 import {useFocusEffect} from '@react-navigation/native';
+import {getCallLogs} from '../database/RealmService';
 
 const CallLogScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
-  const {selectedFilter} = useSelector((state: RootState) => state.callLogs);
-  const {callLogs, loadMore, refresh, isRefreshing, hasMore, totalCount} =
-    useCallLogs(selectedFilter);
+
+  const BATCH_SIZE = 20;
+
+  const [allLogs, setAllLogs] = useState<any[]>([]);
+  const [loadedCount, setLoadedCount] = useState(0);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const [isMenuVisible, setIsMenuVisible] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const flatListRef = useRef<FlatList>(null);
-  const [initialLoadComplete, setInitialLoadComplete] = useState(false);
   const darkMode = useSelector((state: RootState) => state.theme.darkMode);
+
+  const [allLogsCount, setAllLogsCount] = useState(0);
+  const [displayedLogs, setDisplayedLogs] = useState<any[]>([]);
+  useEffect(() => {
+    const all = Array.from(getCallLogs());
+    setAllLogs(all);
+    setAllLogsCount(all.length);
+    const initial = all.slice(0, BATCH_SIZE);
+    setDisplayedLogs(initial);
+    setLoadedCount(initial.length);
+    setHasMore(all.length > BATCH_SIZE);
+  }, []);
+
+  useFocusEffect(
+    React.useCallback(() => {
+      const all = Array.from(getCallLogs());
+      setAllLogs(all);
+      setAllLogsCount(all.length);
+      const initial = all.slice(0, BATCH_SIZE);
+      setDisplayedLogs(initial);
+      setLoadedCount(initial.length);
+      setHasMore(all.length > BATCH_SIZE);
+    }, []),
+  );
+
+  const loadMoreData = () => {
+    if (isLoadingMore || !hasMore) return;
+
+    setIsLoadingMore(true);
+    setTimeout(() => {
+      const nextBatch = allLogs.slice(loadedCount, loadedCount + BATCH_SIZE);
+      setDisplayedLogs(prev => [...prev, ...nextBatch]);
+      setLoadedCount(prev => prev + nextBatch.length);
+      setHasMore(loadedCount + nextBatch.length < allLogs.length);
+      setIsLoadingMore(false);
+    }, 300);
+  };
+
+  // console.log('xxx', displayedLogs);
 
   useFocusEffect(
     React.useCallback(() => {
@@ -53,12 +95,6 @@ const CallLogScreen: React.FC = () => {
       return () => backHandler.remove();
     }, []),
   );
-
-  useEffect(() => {
-    if (callLogs.length > 0) {
-      setInitialLoadComplete(true);
-    }
-  }, [callLogs]);
 
   const handleScroll = (event: NativeSyntheticEvent<NativeScrollEvent>) => {
     const offsetY = event.nativeEvent.contentOffset.y;
@@ -83,7 +119,6 @@ const CallLogScreen: React.FC = () => {
         navigate('PersonCallLogs', {
           item: {
             ...item,
-            createdAt: item?.createdAt?.toISOString(),
           },
         })
       }
@@ -107,7 +142,11 @@ const CallLogScreen: React.FC = () => {
           )}
         </View>
         <View>
-          <Text style={{fontSize: RFValue(18),color:darkMode?Colors.white:Colors.black}}>
+          <Text
+            style={{
+              fontSize: RFValue(18),
+              color: darkMode ? Colors.white : Colors.black,
+            }}>
             {item.name || item.phoneNumber}
           </Text>
           <View style={{flexDirection: 'row', alignItems: 'center', gap: 5}}>
@@ -135,7 +174,9 @@ const CallLogScreen: React.FC = () => {
                 size={RFValue(14)}
               />
             )}
-            <Text style={{color:darkMode?Colors.white:Colors.black}}>{formatDate(item.timestamp)}</Text>
+            <Text style={{color: darkMode ? Colors.white : Colors.black}}>
+              {formatDate(item.timestamp)}
+            </Text>
           </View>
         </View>
       </View>
@@ -143,16 +184,6 @@ const CallLogScreen: React.FC = () => {
   );
 
   const getKey = (item: any): string => item.id;
-
-  useEffect(() => {
-    if (callLogs.length > 0) {
-      console.log('Current call logs stats:', {
-        count: callLogs.length,
-        oldest: new Date(callLogs[callLogs.length - 1].timestamp),
-        newest: new Date(callLogs[0].timestamp),
-      });
-    }
-  }, [callLogs]);
 
   const handleSearchSelect = (item: any) => {
     navigate('PersonCallLogs', {
@@ -231,32 +262,27 @@ const CallLogScreen: React.FC = () => {
           </TouchableOpacity>
         </View>
       )}
-      {!initialLoadComplete && callLogs.length === 0 ? (
+      {displayedLogs.length === 0 ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" />
           <Text style={styles.loadingText}>Loading call history...</Text>
         </View>
       ) : (
         <FlatList
-          data={callLogs}
+          data={displayedLogs}
           renderItem={renderItem}
           keyExtractor={getKey}
-          onEndReached={loadMore}
           onEndReachedThreshold={0.5}
-          onRefresh={refresh}
-          refreshing={isRefreshing}
-          ListFooterComponent={
-            <>
-              {hasMore ? <ActivityIndicator size="small" /> : null}
-              <Text style={{textAlign: 'center', padding: 10}}>
-                Showing {callLogs.length} of {totalCount} logs
-              </Text>
-            </>
-          }
+          onEndReached={loadMoreData}
           showsVerticalScrollIndicator={false}
           ref={flatListRef}
           onScroll={handleScroll}
           scrollEventThrottle={16}
+          ListFooterComponent={
+            isLoadingMore ? (
+              <ActivityIndicator size="small" style={{margin: 10}} />
+            ) : null
+          }
         />
       )}
       {showScrollTop && (

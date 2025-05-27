@@ -1,16 +1,27 @@
-import React, { useEffect, useCallback, useState } from 'react';
+import React, { useEffect, useCallback, useState, useRef } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import Navigation from './src/Navigation/Navigation';
 import { PermissionsAndroid, AppState, Platform } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from './src/state/store';
 import CallLogDatabase, { ensureNumber } from './src/database/CallLogDatabase';
-import CallLogs from 'react-native-call-log';
+import CallLog from 'react-native-call-log';
+import { saveCallLogs, getCallLogs, getCallLogsCount } from './src/database/RealmService';
+
+const BATCH_SIZE = 100;
+const MAX_CALL_LOGS = 7000;
+const FETCH_INTERVAL = 60 * 1000;
+const INITIAL_LOAD_SIZE = 200;
 
 const App = () => {
   const [isSyncing, setIsSyncing] = useState(false);
+  const [displayedLogs, setDisplayedLogs] = useState<any[]>([]);
+  const [allLogsCount, setAllLogsCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const loadingRef = useRef(false);
 
-  const checkAndRequestPermissions = useCallback(async () => {
+  const requestCallLogPermission = useCallback(async () => {
     try {
       if (Platform.OS === 'android') {
         const granted = await PermissionsAndroid.request(
@@ -30,136 +41,103 @@ const App = () => {
     }
   }, []);
 
-  const performInitialSync = useCallback(async () => {
+  const fetchAndSaveCallLogs = async () => {
+    if (loadingRef.current) return;
+    loadingRef.current = true;
+    setIsLoading(true);
+
     try {
-      console.log('Starting initial sync...');
-      setIsSyncing(true);
-      const hasPermission = await checkAndRequestPermissions();
-      if (!hasPermission) {
-        console.log('Permission not granted, skipping sync');
-        return;
-      }
+      const now = Date.now();
+      const oneDayInMillis = 24 * 60 * 60 * 1000;
+      let totalFetched = 0;
+      let currentMaxTimestamp = now;
+      let currentMinTimestamp = now - oneDayInMillis;
 
-      const newestTimestamp = await CallLogDatabase.getNewestTimestamp();
-      console.log('Newest existing timestamp:', newestTimestamp ? new Date(newestTimestamp) : 'None');
-
-      const batchSize = 1000; 
-      let offset = 0;
-      let totalProcessed = 0;
-      let hasMore = true;
-
-      // For initial sync, fetch ALL logs regardless of timestamp
-      const fetchAll = newestTimestamp === null;
-
-      while (hasMore && !isSyncing) {
-        console.log(`Fetching batch at offset ${offset}...`);
-        const callLogs = await CallLogs.load(batchSize, offset > 0 ? { offset } : undefined);
-        
-        if (callLogs.length === 0) {
-          hasMore = false;
-          console.log('No more logs to fetch');
-        } else {
-          const logsToStore = fetchAll 
-            ? callLogs
-            : callLogs.filter(log => {
-                const logTimestamp = typeof log.timestamp === 'string' 
-                  ? parseInt(log.timestamp, 10) 
-                  : log.timestamp;
-                return logTimestamp > newestTimestamp!;
-              });
-          
-          if (logsToStore.length > 0) {
-            console.log(`Storing ${logsToStore.length} logs...`);
-            const result = await CallLogDatabase.storeCallLogs(logsToStore);
-            if (!result.success) {
-              console.error('Failed to store batch:', result.error);
-            }
-          }
-          
-          offset += batchSize;
-          totalProcessed += callLogs.length;
-          console.log(`Processed ${totalProcessed} call logs (stored ${logsToStore.length})...`);
+      while (totalFetched < MAX_CALL_LOGS) {
+        if (currentMinTimestamp >= currentMaxTimestamp) {
+          break;
         }
 
-        await new Promise(resolve => setTimeout(resolve, 100));
-      }
-
-      await syncWithBackend();
-      console.log('Initial sync completed');
-      
-      const totalInDB = await CallLogDatabase.getTotalCount();
-      console.log('Total logs in database:', totalInDB);
-      
-      const realm = await CallLogDatabase.initialize();
-      const allLogs = realm.objects('CallLog').sorted('timestamp');
-      if (allLogs.length > 0) {
-        console.log('Date range in DB:', {
-          oldest: new Date(allLogs[0].timestamp),
-          newest: new Date(allLogs[allLogs.length - 1].timestamp)
+        const logs = await CallLog.load(BATCH_SIZE, {
+          minTimestamp: currentMinTimestamp.toString(),
+          maxTimestamp: currentMaxTimestamp.toString(),
         });
-      }
-    } catch (error) {
-      console.error('Initial sync failed:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [checkAndRequestPermissions, isSyncing]);
 
-  const syncWithBackend = useCallback(async () => {
-    try {
-      const unsyncedLogs = await CallLogDatabase.getUnsyncedCallLogs();
-      if (unsyncedLogs.length > 0) {
-        console.log(`Found ${unsyncedLogs.length} unsynced logs, sending to backend...`);
+        if (logs.length === 0) {
+          currentMaxTimestamp = currentMinTimestamp;
+          currentMinTimestamp = currentMinTimestamp - oneDayInMillis;
+          continue;
+        }
+
+        // Save logs to Realm
+        saveCallLogs(logs);
+        totalFetched += logs.length;
+
+        // Update UI incrementally
+        if (isInitialLoad && totalFetched >= INITIAL_LOAD_SIZE) {
+          updateUI();
+          setIsInitialLoad(false);
+        } else if (!isInitialLoad) {
+          appendNewLogs(logs);
+        }
+
+        // Update the earliest timestamp from the current batch
+        const timestamps = logs.map(log => parseInt(log.timestamp));
+        const earliestTimestamp = Math.min(...timestamps);
         
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        
-        await CallLogDatabase.markAsSynced(unsyncedLogs.map(log => log.id));
-        console.log('Sync with backend completed');
+        if (earliestTimestamp >= currentMaxTimestamp) {
+          break;
+        }
+
+        currentMaxTimestamp = earliestTimestamp;
+        currentMinTimestamp = currentMinTimestamp - oneDayInMillis;
       }
+
+      // Final update with all data
+      updateUI();
     } catch (error) {
-      console.error('Backend sync failed:', error);
+      console.error("Error fetching call logs:", error);
+    } finally {
+      loadingRef.current = false;
+      setIsLoading(false);
+      setIsInitialLoad(false);
     }
+  };
+
+  const updateUI = () => {
+    const allLogs = Array.from(getCallLogs());
+    setAllLogsCount(allLogs.length);
+    setDisplayedLogs(allLogs.slice(0,  allLogs.length));
+  };
+
+  const appendNewLogs = (newLogs: any[]) => {
+    setDisplayedLogs(prevLogs => {
+      // Filter out duplicates that might already be in the list
+      const existingIds = new Set(prevLogs.map(log => log.id));
+      const uniqueNewLogs = newLogs.filter(log => !existingIds.has(log.id));
+      
+      return [...uniqueNewLogs, ...prevLogs];
+    });
+    setAllLogsCount(getCallLogsCount());
+  };
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      const hasPermission = await requestCallLogPermission();
+      if (hasPermission) {
+        await fetchAndSaveCallLogs();
+        
+        const interval = setInterval(() => {
+          fetchAndSaveCallLogs();
+        }, FETCH_INTERVAL);
+
+        return () => clearInterval(interval);
+      }
+    };
+
+    fetchLogs();
   }, []);
 
-  useEffect(() => {
-    const handleAppStateChange = async (nextAppState: string) => {
-      if (nextAppState === 'active' && !isSyncing) {
-        try {
-          const hasData = await CallLogDatabase.hasData();
-          if (hasData) {
-            await performInitialSync();
-          }
-        } catch (error) {
-          console.error('Error during resume sync:', error);
-        }
-      }
-    };
-
-    const subscription = AppState.addEventListener('change', handleAppStateChange);
-    return () => subscription.remove();
-  }, [performInitialSync, isSyncing]);
-
-  useEffect(() => {
-    const initializeApp = async () => {
-      try {
-        console.log('Initializing app...');
-        await CallLogDatabase.initialize();
-        
-        const hasData = await CallLogDatabase.hasData();
-        console.log(`Database has data: ${hasData}`);
-
-        if (!hasData) {
-          console.log('No data found, performing full sync');
-          await CallLogDatabase.forceRefreshAllLogs();
-        }
-        await performInitialSync();
-      } catch (error) {
-        console.error('App initialization failed:', error);
-      }
-    };
-
-    initializeApp();
-  }, [performInitialSync]);
 
   return (
     <Provider store={store}>

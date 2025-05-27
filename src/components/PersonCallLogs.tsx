@@ -20,10 +20,10 @@ import Icon from './common/Icon';
 import {goBack} from '../utility/NavigationUtils';
 import {Avatar} from '@rneui/themed';
 import {Colors} from '../utility/constants';
-import CallLogDatabase from '../database/CallLogDatabase';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {useSelector} from 'react-redux';
 import {RootState} from '../state/store';
+import {getCallLogsByPhoneNumber,setFeedbackForCallLog} from '../database/RealmService';
 
 interface ICallLog {
   phoneNumber: string;
@@ -50,28 +50,14 @@ const PersonCallLogs = () => {
   const [isLoading, setIsLoading] = useState(true);
   const darkMode = useSelector((state: RootState) => state.theme.darkMode);
 
-  const loadAllCallLogs = useCallback(async () => {
-    if (!phoneNumber) return;
-
-    setIsLoading(true);
-    try {
-      const realm = await CallLogDatabase.initialize();
-      const results = realm
-        .objects<ICallLog>('CallLog')
-        .filtered('phoneNumber == $0', phoneNumber)
-        .sorted('timestamp', true);
-
-      setLogsForNumber(Array.from(results));
-    } catch (error) {
-      console.log('Error loading call logs:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [phoneNumber]);
-
   useEffect(() => {
-    loadAllCallLogs();
-  }, [loadAllCallLogs]);
+  if (!phoneNumber) return;
+
+  setIsLoading(true);
+  const logs = getCallLogsByPhoneNumber(phoneNumber);
+  setLogsForNumber(logs);
+  setIsLoading(false);
+}, [phoneNumber]);
 
   const handleOpenModal = (item: ICallLog) => {
     setCurrentKey(item.id);
@@ -79,22 +65,19 @@ const PersonCallLogs = () => {
     setModalVisible(true);
   };
 
-  const handleSaveFeedback = async () => {
-    if (currentKey) {
-      const success = await CallLogDatabase.setFeedback(
-        currentKey,
-        feedbackText,
+  const handleSaveFeedback = () => {
+  if (currentKey) {
+    const success = setFeedbackForCallLog(currentKey, feedbackText);
+    if (success) {
+      setLogsForNumber(prev =>
+        prev.map(log =>
+          log.id === currentKey ? {...log, feedback: feedbackText} : log,
+        ),
       );
-      if (success) {
-        setLogsForNumber(prev =>
-          prev.map(log =>
-            log.id === currentKey ? {...log, feedback: feedbackText} : log,
-          ),
-        );
-      }
     }
-    setModalVisible(false);
-  };
+  }
+  setModalVisible(false);
+};
 
   const formatDate = (dateTime: string) => {
     const date = moment(dateTime, 'DD-MMM-YYYY hh:mm:ss a');

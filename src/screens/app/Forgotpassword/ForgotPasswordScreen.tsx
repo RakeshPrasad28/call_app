@@ -33,70 +33,81 @@ const ForgotPasswordScreen = () => {
       colors={
         darkMode
           ? [Colors.BlackFeather, Colors.RoyalNeptune, Colors.Glitch]
-          : [Colors.coral, Colors.white]
+          : ['#e0e5ec', '#f2f6fc']
       }
       style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      <SafeAreaView style={styles.innerContainer}>
-        <Text
-          style={[
-            styles.title,
-            {color: darkMode ? Colors.white : Colors.carbon},
-          ]}>
-          Forgot Password
-        </Text>
-        <Text
-          style={[
-            styles.subtitle,
-            {color: darkMode ? Colors.cerebralGrey : Colors.stoneCold},
-          ]}>
-          Enter your phone number to receive an OTP
-        </Text>
+      <StatusBar
+        barStyle={darkMode ? 'light-content' : 'dark-content'}
+        backgroundColor="transparent"
+        translucent
+      />
 
+      <SafeAreaView style={styles.safeArea}>
         <View
           style={[
-            styles.inputContainer,
+            styles.contentBox,
             {
-              backgroundColor: darkMode ? Colors.carbon : Colors.white,
-              shadowColor: darkMode ? Colors.white : Colors.black,
+              backgroundColor: darkMode ? Colors.carbon : 'rgba(255, 255, 255, 0.9)',
+              shadowColor: darkMode ? 'transparent' : '#000',
             },
           ]}>
-          <Icon
-            name="phone"
-            size={22}
-            color={darkMode ? Colors.DhūsarGrey : Colors.coral}
-            style={styles.icon}
-          />
-          <TextInput
-            style={styles.input}
-            placeholder="Phone Number"
-            placeholderTextColor={
-              darkMode ? Colors.DhūsarGrey : Colors.LuckyGrey
-            }
-            keyboardType="phone-pad"
-            value={phone}
-            onChangeText={setPhone}
-          />
-        </View>
-
-        <TouchableOpacity
-          style={[
-            styles.otpButton,
-            {backgroundColor: darkMode ? Colors.vividSkyBlue : Colors.coral},
-          ]}
-          onPress={handleSendOtp}>
-          <Text style={styles.otpText}>Send OTP</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.backToLogin} onPress={() => goBack()}>
+          <Text
+            style={[styles.title, {color: darkMode ? Colors.white : '#333'}]}>
+            Forgot Password
+          </Text>
           <Text
             style={[
-              styles.backText,
+              styles.subtitle,
               {color: darkMode ? Colors.cerebralGrey : Colors.stoneCold},
             ]}>
-            Back to Login
+            Enter your phone number to receive an OTP
           </Text>
-        </TouchableOpacity>
+
+          <View
+            style={[
+              styles.inputContainer,
+              {
+                backgroundColor: darkMode ? Colors.carbon : '#fff',
+                borderColor: darkMode ? Colors.DhūsarGrey : '#ddd',
+              },
+            ]}>
+            <Icon
+              name="phone"
+              size={22}
+              color={darkMode ? Colors.DhūsarGrey : '#FF6B6B'}
+              style={styles.icon}
+            />
+            <TextInput
+              style={[styles.input, {color: darkMode ? Colors.white : '#222'}]}
+              placeholder="Phone Number"
+              placeholderTextColor={darkMode ? Colors.DhūsarGrey : '#999'}
+              keyboardType="phone-pad"
+              value={phone}
+              onChangeText={setPhone}
+            />
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.otpButton,
+              {
+                backgroundColor: darkMode ? Colors.vividSkyBlue : '#FF6B6B',
+              },
+            ]}
+            onPress={handleSendOtp}>
+            <Text style={styles.otpText}>Send OTP</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.backToLogin} onPress={goBack}>
+            <Text
+              style={[
+                styles.backText,
+                {color: darkMode ? Colors.cerebralGrey : '#0066cc'},
+              ]}>
+              Back to Login
+            </Text>
+          </TouchableOpacity>
+        </View>
       </SafeAreaView>
     </LinearGradient>
   );
@@ -106,17 +117,24 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  innerContainer: {
+  safeArea: {
     flex: 1,
-    padding: 24,
     justifyContent: 'center',
+    paddingHorizontal: 20,
+  },
+  contentBox: {
+    borderRadius: 20,
+    padding: 24,
+    shadowOffset: {width: 0, height: 4},
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 6,
   },
   title: {
     fontSize: 28,
-    color: Colors.white,
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   subtitle: {
     fontSize: 14,
@@ -126,31 +144,26 @@ const styles = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 10,
-    paddingHorizontal: 12,
+    borderRadius: 12,
+    paddingHorizontal: 14,
     paddingVertical: 14,
     marginBottom: 20,
-    shadowOffset: {width: 0, height: 2},
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+    borderWidth: 1,
   },
   icon: {
     marginRight: 10,
   },
   input: {
     flex: 1,
-    color: Colors.white,
     fontSize: 16,
   },
   otpButton: {
     paddingVertical: 14,
     borderRadius: 10,
     alignItems: 'center',
-    marginTop: 10,
   },
   otpText: {
-    color: Colors.white,
+    color: '#fff',
     fontSize: 18,
     fontWeight: 'bold',
   },

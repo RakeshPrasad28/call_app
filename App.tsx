@@ -4,7 +4,6 @@ import Navigation from './src/Navigation/Navigation';
 import { PermissionsAndroid, AppState, Platform } from 'react-native';
 import { Provider } from 'react-redux';
 import { store } from './src/state/store';
-import CallLogDatabase, { ensureNumber } from './src/database/CallLogDatabase';
 import CallLog from 'react-native-call-log';
 import { saveCallLogs, getCallLogs, getCallLogsCount } from './src/database/RealmService';
 
@@ -14,7 +13,6 @@ const FETCH_INTERVAL = 60 * 1000;
 const INITIAL_LOAD_SIZE = 200;
 
 const App = () => {
-  const [isSyncing, setIsSyncing] = useState(false);
   const [displayedLogs, setDisplayedLogs] = useState<any[]>([]);
   const [allLogsCount, setAllLogsCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);

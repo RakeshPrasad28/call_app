@@ -18,6 +18,7 @@ import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import {useSafeAreaInsets} from 'react-native-safe-area-context';
 import {resetAndNavigate} from '../../../utility/NavigationUtils';
 import {launchImageLibrary, launchCamera} from 'react-native-image-picker';
+import { Colors } from '../../../utility/constants';
 
 type RootStackParamList = {
   Login: undefined;
@@ -153,15 +154,15 @@ const SettingScreen = () => {
           <View
             style={[
               styles.profileImageContainer,
-              {borderColor: darkMode ? '#00c6ff' : '#2C2C2C'},
+              {borderColor: darkMode ? Colors.button_blue : Colors.carbon},
             ]}>
             <Image source={{uri: profileImage}} style={styles.profileImage} />
             <View style={styles.editIcon}>
-              <Icon name="camera" size={20} color="#fff" />
+              <Icon name="camera" size={20} color={Colors.white} />
             </View>
           </View>
         </TouchableOpacity>
-        <Text style={[styles.profileName, {color: darkMode ? '#fff' : '#000'}]}>
+        <Text style={[styles.profileName, {color: darkMode ? Colors.white : Colors.black}]}>
           Rakesh
         </Text>
         <Text
@@ -171,14 +172,14 @@ const SettingScreen = () => {
       </View>
 
       <View
-        style={[styles.card, {backgroundColor: darkMode ? '#2C2C2C' : '#fff'}]}>
+        style={[styles.card, {backgroundColor: darkMode ? '#2C2C2C' : Colors.white}]}>
         <View style={styles.row}>
           <Icon
             name="theme-light-dark"
             size={24}
-            color={darkMode ? '#fff' : '#333'}
+            color={darkMode ? Colors.white : Colors.carbon}
           />
-          <Text style={[styles.text, {color: darkMode ? '#fff' : '#000'}]}>
+          <Text style={[styles.text, {color: darkMode ? Colors.white : Colors.black}]}>
             Dark Mode
           </Text>
           <Switch
@@ -194,7 +195,7 @@ const SettingScreen = () => {
       </View>
 
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Icon name="logout" size={20} color="#fff" style={{marginRight: 8}} />
+        <Icon name="logout" size={20} color={Colors.white} style={{marginRight: 8}} />
         <Text style={styles.logoutText}>Logout</Text>
       </TouchableOpacity>
     </View>

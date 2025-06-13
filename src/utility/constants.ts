@@ -24,7 +24,18 @@ export enum Colors {
   LiquidNitrogen = "#f4f3f4",
   LuckyGrey = '#767577',
   ParakeetBlue = '#81b0ff',
-  DhūsarGrey = '#aaa'
+  DhūsarGrey = '#aaa',
+  steam = "#ddd",
+  pompelmo = '#FF6B6B',
+  black_out = '#222',
+  million_grey = '#999',
+  royal_navy_blue = '#0066cc',
+  tangled_web = '#B3B3B3',
+  blue = '#0000ff',
+  whiteSmoke = '#f5f5f5',
+  button_blue = '#1DA1F2',
+  brink_pink = '#FF6384',
+  christmas_silver = '#e0e0e0',
 }
 export enum Fonts {
   Regular = 'Satoshi-Regular',

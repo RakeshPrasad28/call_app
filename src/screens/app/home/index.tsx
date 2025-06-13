@@ -289,7 +289,7 @@ const Home = () => {
       {loading ? (
         <ActivityIndicator
           size="large"
-          color="#0000ff"
+          color={Colors.blue}
           style={{marginTop: 40}}
         />
       ) : (
@@ -297,7 +297,7 @@ const Home = () => {
           style={[
             styles.container,
             {paddingTop: Platform.OS === 'ios' ? 0 : insets.top},
-            {backgroundColor: darkMode ? Colors.carbon : '#f5f5f5'},
+            {backgroundColor: darkMode ? Colors.carbon : Colors.whiteSmoke},
           ]}
           contentContainerStyle={styles.scrollContent}>
           <View style={styles.chartHeader}>
@@ -314,7 +314,7 @@ const Home = () => {
             <View style={{justifyContent:"center", alignItems:"center"}}>
               <ActivityIndicator
                 size="large"
-                color="#1DA1F2"
+                color={Colors.button_blue}
                 style={{marginTop: 100}}
               />
             </View>
@@ -324,7 +324,7 @@ const Home = () => {
               height={250}
               showValuesOnTopOfBars
               spacing={40}
-              color="#1DA1F2"
+              color={Colors.button_blue}
               textColor={darkMode ? Colors.white : Colors.black}
               thickness={2}
               noOfSections={5}
@@ -355,7 +355,7 @@ const Home = () => {
             <View style={{justifyContent:"center", alignItems:"center"}}>
               <ActivityIndicator
                 size="large"
-                color="#FF6384"
+                color={Colors.brink_pink}
                 style={{marginTop: 100}}
               />
             </View>
@@ -365,7 +365,7 @@ const Home = () => {
               height={250}
               spacing={40}
               barWidth={30}
-              frontColor="#FF6384"
+              frontColor={Colors.brink_pink}
               yAxisTextStyle={{color: darkMode ? Colors.white : Colors.black}}
               xAxisLabelTextStyle={{
                 color: darkMode ? Colors.white : Colors.black,
@@ -471,7 +471,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: Colors.whiteSmoke,
   },
   scrollContent: {
     paddingBottom: 80,
@@ -490,18 +490,18 @@ const styles = StyleSheet.create({
   header: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#000',
+    color: Colors.black,
   },
   chart: {
     marginBottom: 30,
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     borderRadius: 16,
     padding: 10,
   },
   pieWrapper: {
     alignItems: 'center',
     marginVertical: 20,
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     borderRadius: 16,
     padding: 20,
   },
@@ -512,11 +512,11 @@ const styles = StyleSheet.create({
   totalCallsText: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000',
+    color: Colors.black,
   },
   totalCallsLabel: {
     fontSize: 14,
-    color: '#666',
+    color: Colors.stoneCold,
   },
   legend: {
     marginTop: 20,
@@ -541,19 +541,19 @@ const styles = StyleSheet.create({
   },
   legendLabel: {
     fontSize: 16,
-    color: '#000',
+    color: Colors.black,
     width: '30%',
   },
   legendCount: {
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#000',
+    color: Colors.black,
     textAlign: 'right',
     width: '30%',
   },
   legendPercentage: {
     fontSize: 16,
-    color: '#000',
+    color: Colors.black,
     textAlign: 'right',
     width: '30%',
   },
@@ -561,23 +561,23 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   filterButton: {
-    backgroundColor: '#e0e0e0',
+    backgroundColor: Colors.christmas_silver,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   filterButtonText: {
     fontWeight: 'bold',
-    color: '#333',
+    color: Colors.carbon,
   },
   filterMenu: {
     position: 'absolute',
     top: 30,
     right: 0,
-    backgroundColor: 'white',
+    backgroundColor: Colors.white,
     borderRadius: 8,
     padding: 8,
-    shadowColor: '#000',
+    shadowColor: Colors.black,
     shadowOffset: {width: 0, height: 2},
     shadowOpacity: 0.2,
     shadowRadius: 4,

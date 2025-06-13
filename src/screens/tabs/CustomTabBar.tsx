@@ -1,4 +1,4 @@
-import {View, Text, StyleSheet, TouchableOpacity} from 'react-native';
+import { StyleSheet, TouchableOpacity} from 'react-native';
 import React, {FC} from 'react';
 import {BottomTabBarProps} from '@react-navigation/bottom-tabs';
 import {useSharedState} from './SharedContext';
@@ -64,12 +64,12 @@ const CustomTabBar: FC<BottomTabBarProps> = props => {
 };
 const styles = StyleSheet.create({
   focusedTabLevel: {
-    color: '#fff',
+    color: Colors.white,
   },
   tablevel: {
     fontFamily: Fonts.Medium,
     fontSize: RFValue(10),
-    color: '#B3B3B3',
+    color: Colors.tangled_web,
   },
   pressedTabItem: {
     opacity: 0.7,

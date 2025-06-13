@@ -50,8 +50,8 @@ const LoginScreen = () => {
         <Switch
           value={darkMode}
           onValueChange={() => dispatch(toggleTheme())}
-          thumbColor={darkMode ? Colors.vividSkyBlue : '#fff'}
-          trackColor={{false: '#ccc', true: Colors.ParakeetBlue}}
+          thumbColor={darkMode ? Colors.vividSkyBlue : Colors.white}
+          trackColor={{false: Colors.cerebralGrey, true: Colors.ParakeetBlue}}
         />
       </View>
 
@@ -61,11 +61,11 @@ const LoginScreen = () => {
             styles.contentBox,
             {
               backgroundColor: darkMode ? Colors.carbon : 'rgba(255, 255, 255, 0.9)',
-              shadowColor: darkMode ? 'transparent' : '#000',
+              shadowColor: darkMode ? 'transparent' : Colors.black,
             },
           ]}>
           <Text
-            style={[styles.logo, {color: darkMode ? Colors.white : '#333'}]}>
+            style={[styles.logo, {color: darkMode ? Colors.white : Colors.carbon}]}>
             Login
           </Text>
 
@@ -73,20 +73,20 @@ const LoginScreen = () => {
             style={[
               styles.inputContainer,
               {
-                backgroundColor: darkMode ? Colors.carbon : '#fff',
-                borderColor: darkMode ? Colors.DhūsarGrey : '#ddd',
+                backgroundColor: darkMode ? Colors.carbon : Colors.white,
+                borderColor: darkMode ? Colors.DhūsarGrey : Colors.steam,
               },
             ]}>
             <Icon
               name="phone"
               size={22}
-              color={darkMode ? Colors.DhūsarGrey : '#FF6B6B'}
+              color={darkMode ? Colors.DhūsarGrey : Colors.pompelmo}
               style={styles.icon}
             />
             <TextInput
-              style={[styles.input, {color: darkMode ? Colors.white : '#222'}]}
+              style={[styles.input, {color: darkMode ? Colors.white : Colors.black_out}]}
               placeholder="Phone Number"
-              placeholderTextColor={darkMode ? Colors.DhūsarGrey : '#999'}
+              placeholderTextColor={darkMode ? Colors.DhūsarGrey : Colors.million_grey}
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
@@ -97,20 +97,20 @@ const LoginScreen = () => {
             style={[
               styles.inputContainer,
               {
-                backgroundColor: darkMode ? Colors.carbon : '#fff',
-                borderColor: darkMode ? Colors.DhūsarGrey : '#ddd',
+                backgroundColor: darkMode ? Colors.carbon : Colors.white,
+                borderColor: darkMode ? Colors.DhūsarGrey : Colors.steam,
               },
             ]}>
             <Icon
               name="lock-outline"
               size={22}
-              color={darkMode ? Colors.DhūsarGrey : '#FF6B6B'}
+              color={darkMode ? Colors.DhūsarGrey : Colors.pompelmo}
               style={styles.icon}
             />
             <TextInput
-              style={[styles.input, {color: darkMode ? Colors.white : '#222'}]}
+              style={[styles.input, {color: darkMode ? Colors.white : Colors.black_out}]}
               placeholder="Password"
-              placeholderTextColor={darkMode ? Colors.DhūsarGrey : '#999'}
+              placeholderTextColor={darkMode ? Colors.DhūsarGrey : Colors.million_grey}
               secureTextEntry={secureText}
               value={password}
               onChangeText={setPassword}
@@ -119,7 +119,7 @@ const LoginScreen = () => {
               <Icon
                 name={secureText ? 'eye-outline' : 'eye-off-outline'}
                 size={22}
-                color={darkMode ? Colors.DhūsarGrey : '#999'}
+                color={darkMode ? Colors.DhūsarGrey : Colors.million_grey}
               />
             </TouchableOpacity>
           </View>
@@ -130,7 +130,7 @@ const LoginScreen = () => {
             <Text
               style={[
                 styles.forgotText,
-                {color: darkMode ? Colors.cerebralGrey : '#0066cc'},
+                {color: darkMode ? Colors.cerebralGrey : Colors.vividSkyBlue},
               ]}>
               Forgot Password?
             </Text>
@@ -140,7 +140,7 @@ const LoginScreen = () => {
             style={[
               styles.loginButton,
               {
-                backgroundColor: darkMode ? Colors.vividSkyBlue : '#FF6B6B',
+                backgroundColor: darkMode ? Colors.vividSkyBlue : Colors.pompelmo,
               },
             ]}
             onPress={handleLogin}>
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   loginText: {
-    color: '#fff',
+    color: Colors.white,
     fontSize: 18,
     fontWeight: 'bold',
   },

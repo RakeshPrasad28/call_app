@@ -20,7 +20,6 @@ export const saveCallLogs = (callLogs: ICallLog[]) => {
   
   realmInstance.write(() => {
     callLogs.forEach(log => {
-      // Ensure timestamp is a number
       const timestamp = typeof log.timestamp === 'string' ? parseInt(log.timestamp) : log.timestamp;
       const id = `${log.phoneNumber}-${timestamp}`;
       

@@ -52,7 +52,7 @@ const ForgotPasswordScreen = () => {
             },
           ]}>
           <Text
-            style={[styles.title, {color: darkMode ? Colors.white : '#333'}]}>
+            style={[styles.title, {color: darkMode ? Colors.white : Colors.carbon}]}>
             Forgot Password
           </Text>
           <Text
@@ -67,20 +67,20 @@ const ForgotPasswordScreen = () => {
             style={[
               styles.inputContainer,
               {
-                backgroundColor: darkMode ? Colors.carbon : '#fff',
-                borderColor: darkMode ? Colors.DhūsarGrey : '#ddd',
+                backgroundColor: darkMode ? Colors.carbon : Colors.white,
+                borderColor: darkMode ? Colors.DhūsarGrey : Colors.steam,
               },
             ]}>
             <Icon
               name="phone"
               size={22}
-              color={darkMode ? Colors.DhūsarGrey : '#FF6B6B'}
+              color={darkMode ? Colors.DhūsarGrey : Colors.pompelmo}
               style={styles.icon}
             />
             <TextInput
-              style={[styles.input, {color: darkMode ? Colors.white : '#222'}]}
+              style={[styles.input, {color: darkMode ? Colors.white : Colors.black_out}]}
               placeholder="Phone Number"
-              placeholderTextColor={darkMode ? Colors.DhūsarGrey : '#999'}
+              placeholderTextColor={darkMode ? Colors.DhūsarGrey : Colors.million_grey}
               keyboardType="phone-pad"
               value={phone}
               onChangeText={setPhone}
@@ -91,7 +91,7 @@ const ForgotPasswordScreen = () => {
             style={[
               styles.otpButton,
               {
-                backgroundColor: darkMode ? Colors.vividSkyBlue : '#FF6B6B',
+                backgroundColor: darkMode ? Colors.vividSkyBlue : Colors.pompelmo,
               },
             ]}
             onPress={handleSendOtp}>
@@ -102,7 +102,7 @@ const ForgotPasswordScreen = () => {
             <Text
               style={[
                 styles.backText,
-                {color: darkMode ? Colors.cerebralGrey : '#0066cc'},
+                {color: darkMode ? Colors.cerebralGrey : Colors.royal_navy_blue},
               ]}>
               Back to Login
             </Text>
@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   otpText: {
-    color: '#fff',
+    color: Colors.white,
     fontSize: 18,
     fontWeight: 'bold',
   },
